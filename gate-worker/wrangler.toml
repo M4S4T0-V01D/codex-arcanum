@@ -1,0 +1,27 @@
+name = "codex-arcanum-gate"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Entries (wallet, X handle, seat), claimed game seeds, rate-limit buckets.
+[[d1_databases]]
+binding = "DB"
+database_name = "codex-arcanum-gate"
+database_id = "cd294c70-0632-4ee1-8f0c-742b3b622eb9"
+
+# Every 10 minutes: export changed lists to GitHub (only if GITHUB_TOKEN is set)
+# and sweep old rate-limit buckets.
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+ALLOWED_ORIGINS = "https://m4s4t0-v01d.github.io,http://localhost:8765"
+# A verified win seats you in the Inner Sanctum (GTD) with this probability,
+# while Sanctum seats remain; otherwise in the Outer Court (FCFS).
+GTD_ODDS = "0.25"
+GTD_CAP = "150"
+GITHUB_REPO = "M4S4T0-V01D/codex-arcanum-allowlist"
+
+# Secrets (wrangler secret put):
+#   GAME_SECRET   signs dealt games so wins can be verified (set at first deploy)
+#   GITHUB_TOKEN  optional: fine-grained PAT, Contents read/write on the
+#                 allowlist repo only. Without it, run `npm run export` locally.

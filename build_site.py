@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 from collections import Counter
@@ -31,6 +32,7 @@ SEED = "codex-arcanum-1928"
 SUPPLY = 777
 SITE_URL = "https://m4s4t0-v01d.github.io/codex-arcanum/"
 REPO_URL = "https://github.com/M4S4T0-V01D/codex-arcanum"
+GATE_URL = "https://codex-arcanum-gate.masato-void.workers.dev"  # the gate worker (gate-worker/)
 DOCS = "docs"
 PLATES = os.path.join(DOCS, "plates")
 
@@ -178,8 +180,16 @@ def main():
     data["hero"] = hero
     og_image([hero[0], hero[1], hero[2]], os.path.join(DOCS, "og.png"))
 
+    # the Game of Thoth: one card pool for the site and the gate worker, one engine for both
+    pool = [{"id": t["id"], "name": t["name"], "sides": t["card"], "level": t["level"]} for t in data["tokens"]]
+    with open("gate-worker/src/cards.json", "w", encoding="utf-8") as f:
+        json.dump(pool, f, ensure_ascii=False)
+    with open("site/thoth-engine.js", encoding="utf-8") as f:
+        engine = re.sub(r"^export ", "", f.read(), flags=re.M)
+
     with open("site/index.template.html", encoding="utf-8") as f:
         page = f.read()
+    page = page.replace("/*__ENGINE__*/", engine).replace("__GATE_URL__", GATE_URL)
     page = page.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     page = page.replace("__SITE_URL__", SITE_URL).replace("__REPO_URL__", REPO_URL)
     with open(os.path.join(DOCS, "index.html"), "w", encoding="utf-8") as f:

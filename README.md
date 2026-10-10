@@ -125,3 +125,51 @@ and a preview run and the full run always agree. Changing `--seed` or
 
 To add a figure, decorate a function with `@sigil(...)` in `sigils.py`.
 `--all-figures` will then pick it up.
+
+## The gate (allowlist) — `gate-worker/`
+
+A Cloudflare Worker (`codex-arcanum-gate.masato-void.workers.dev`) with a D1
+database. It runs the allowlist for the mint on OpenSea (Robinhood Chain).
+
+| Phase | Name | How you get in |
+|---|---|---|
+| I · GTD | **The Inner Sanctum** | Beat Hermes at the Game of Thoth. The knucklebones seat a verified winner here with probability `GTD_ODDS` (0.25) while seats remain (`GTD_CAP`, 150); otherwise in the Court |
+| II · FCFS | **The Outer Court** | Sign the Book of Names (@X + EVM address) or win a game |
+| III · Public | **The Open Gate** | Everyone, at the public mint |
+
+**Wins are verified, not trusted.** `POST /thoth/start` deals each game
+server-side from a random seed and signs `seed.iat` with HMAC (`GAME_SECRET`).
+`POST /thoth/claim` checks the signature and age (3 h), then **replays the whole
+game** with the shared engine (`site/thoth-engine.js`, which the site inlines at
+build time) using the player's recorded moves. Only a genuine win is accepted,
+and each seed can be claimed once. A wallet keeps the best seat it has won.
+Also enforced:
+- per-IP hourly rate limits
+- address validation (0x + 40 hex; no ENS)
+- X-handle validation
+- a honeypot field
+- CORS limited to the Pages origin
+
+**Exports.** Entries go to the **private** repo `M4S4T0-V01D/codex-arcanum-allowlist`
+(it links wallets to X handles, so keep it private):
+
+- `phase-1-inner-sanctum-gtd.csv` and `phase-2-outer-court-fcfs.csv`: one 0x address
+  per row, for OpenSea Studio allowlists. Check Studio's own template when you
+  upload, in case it expects a different header.
+- `entries.csv`: everything (address, @X, seat, source, wins, times).
+
+```
+cd gate-worker
+npm run export        # D1 -> CSVs -> commit + push to the private repo (uses your wrangler + gh logins)
+npx wrangler deploy   # after changing the worker or the card pool
+```
+
+For automatic exports every 10 minutes, give the worker a fine-grained GitHub
+token with *Contents: read & write* on the allowlist repo only:
+`npx wrangler secret put GITHUB_TOKEN`. Until then, `npm run export` does
+the same job by hand.
+
+`build_site.py` writes `gate-worker/src/cards.json`, the same card pool the
+site uses. Redeploy the worker whenever it changes. To rename the phases,
+edit `gate-worker/src/csv.js` (`PHASES`) and the phase panel in
+`site/index.template.html`.

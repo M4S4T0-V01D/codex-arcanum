@@ -1,0 +1,13 @@
+{
+  "name": "codex-arcanum-gate",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "schema": "wrangler d1 execute codex-arcanum-gate --remote --file schema.sql",
+    "export": "node scripts/export.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
+  }
+}

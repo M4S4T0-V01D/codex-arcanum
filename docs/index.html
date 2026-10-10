@@ -101,16 +101,20 @@ body.locked nav,body.locked .scroll-cue{opacity:0;pointer-events:none}
 .light{position:absolute;inset:0;border-radius:50% 50% 0 0/22% 22% 0 0;opacity:0;transition:opacity 1.8s ease;
   background:radial-gradient(ellipse at 50% 58%,#fffaf0,#ffe2a0 18%,rgba(255,180,70,.55) 42%,rgba(120,60,10,.2) 70%,transparent)}
 .doors{position:absolute;inset:0}
-.door{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;transition:transform 2.3s cubic-bezier(.55,0,.2,1);
-  background:repeating-linear-gradient(0deg,rgba(127,246,255,.035) 0 1px,transparent 1px 6px),linear-gradient(90deg,#0f0a06,#2b2014 48%,#18110a);
-  box-shadow:inset 0 0 0 2px #5a4628,inset 0 0 50px rgba(0,0,0,.7)}
+.door{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;transition:transform 2.3s cubic-bezier(.55,0,.2,1);background:#120c07;
+  box-shadow:inset 0 0 0 2px #5a4628,inset 0 0 60px rgba(0,0,0,.75)}
 .door.l{left:0;transform-origin:left center;border-radius:100% 0 0 0/22% 0 0 0}
 .door.r{right:0;transform-origin:right center;border-radius:0 100% 0 0/0 22% 0 0}
-.door::before{content:"";position:absolute;inset:30% 14% 7% 14%;border:1px solid rgba(232,201,119,.3);box-shadow:inset 0 0 0 6px rgba(0,0,0,.28),inset 0 0 0 7px rgba(127,246,255,.14)}
-.door svg{position:absolute;top:14%;width:200%;height:auto;filter:drop-shadow(0 0 10px rgba(232,180,90,.55))}
-.door.l svg{left:0}.door.r svg{left:-100%}
-.door .ringh{position:absolute;top:60%;width:18px;height:18px;border:2px solid #b8934c;border-radius:50%;box-shadow:0 0 8px rgba(232,180,90,.4)}
-.door.l .ringh{right:10px}.door.r .ringh{left:10px}
+.door svg{position:absolute;inset:0;width:100%;height:100%}
+.door .trace{fill:none;stroke:#7ff6ff;stroke-width:1.1;stroke-dasharray:6 90;animation:trace 4.5s linear infinite;filter:drop-shadow(0 0 3px #7ff6ff)}
+.door .trace.b{animation-delay:-1.5s}.door .trace.c{animation-delay:-3s}
+@keyframes trace{to{stroke-dashoffset:-96}}
+.door .glyphs{fill:none;stroke:#c99a48;stroke-width:1.3;opacity:.75}
+.seam{position:absolute;left:50%;top:6%;bottom:0;width:2px;transform:translateX(-50%);background:linear-gradient(transparent,#ffe6a8 6%,#fff6dc 10%,transparent 13%,transparent 62%,#ffe6a8 67%,#fff6dc 82%,#ffe6a8 94%,transparent);
+  box-shadow:0 0 18px 4px rgba(255,200,110,.5);animation:seam 3.2s ease-in-out infinite;pointer-events:none}
+@keyframes seam{50%{opacity:.45;box-shadow:0 0 8px 2px rgba(255,200,110,.3)}}
+#threshold.opening .seam{opacity:0;transition:opacity .4s}
+.sealTicks{transform-origin:0 0;animation:spin 90s linear infinite}
 .portal.knock .doors{animation:knock .35s ease}
 @keyframes knock{0%{transform:none}25%{transform:translateY(1px) scale(.992)}55%{transform:translateX(-2px)}100%{transform:none}}
 .ripple{position:absolute;width:12px;height:12px;margin:-6px;border-radius:50%;border:2px solid var(--cy);pointer-events:none;animation:ripple 1s ease-out forwards}
@@ -503,6 +507,32 @@ footer .whisper{font-style:italic;color:#5e5444}
   .th-col.top{order:-1}
 }
 
+
+.claim{max-width:640px;margin:14px auto 0;padding:18px 20px;--hb:rgba(4,12,14,.85);text-align:center;grid-column:1/-1}
+.claim p{font-size:17px;color:#d8cbae;margin:0 0 12px}
+.claim .row,.book .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.claim input,.book input{flex:1 1 220px;min-width:0;background:rgba(0,0,0,.45);border:1px solid var(--line2);color:var(--text);font:400 13px/1.2 var(--mono);padding:12px 12px;outline:none}
+.claim input:focus,.book input:focus{border-color:var(--cy);box-shadow:0 0 14px rgba(127,246,255,.2)}
+.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0}
+.claim-out,.book-out{margin-top:12px;min-height:1.4em;font-size:17px;color:#ddd0b2}
+.seat{display:flex;width:fit-content;flex-direction:column;align-items:center;gap:4px;padding:14px 22px;margin:6px auto 10px;border:1px solid var(--gold2);animation:seatIn 1s cubic-bezier(.2,.7,.2,1)}
+.seat span{font:500 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.seat b{font:700 clamp(22px,3vw,30px)/1.1 var(--deco);color:var(--gold)}
+.seat.sanctum{border-color:#fff;box-shadow:0 0 40px rgba(255,230,160,.45);background:radial-gradient(circle,rgba(255,220,140,.18),transparent 70%)}
+.seat.sanctum b{background:linear-gradient(90deg,#fff1c4,#e8c977,#fff1c4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.seat.court b{color:var(--cy)}
+@keyframes seatIn{from{opacity:0;transform:scale(.8);filter:blur(6px)}}
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:24px 0}
+.phases div{background:#0b0807;padding:16px 12px}
+.phases i{display:block;font:normal 500 10px/1 var(--mono);letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.phases b{display:block;font:700 18px/1.2 var(--deco);color:var(--gold);margin:8px 0 6px}
+.phases span{font-size:15px;color:#cdbf9f}
+.phases em{display:block;font:normal 400 11px/1.4 var(--mono);color:var(--cy);margin-top:6px}
+.book{max-width:820px;margin:40px auto 0;padding:clamp(22px,4vw,40px);--hb:var(--panel);text-align:center}
+.book h3{font:700 clamp(22px,3vw,30px)/1.15 var(--deco);margin:10px 0 10px}
+.book p.small{font-size:14px;color:var(--faint);margin:12px 0 0}
+@media (max-width:620px){.phases{grid-template-columns:1fr}}
+
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--line2);background:#0b0807;color:var(--text);padding:0;max-width:min(1000px,calc(100vw - 24px));width:100%;max-height:calc(100vh - 24px);
   box-shadow:0 0 0 1px #000,0 40px 120px rgba(0,0,0,.8),0 0 120px rgba(232,180,90,.12)}
@@ -551,8 +581,9 @@ html.pavonis .emblem,html.pavonis .brand,html.pavonis .btn.solid,html.pavonis .o
     <button class="portal" id="portal" type="button" aria-label="Knock on the temple door. Three knocks open it.">
       <span class="light"></span>
       <span class="doors">
-        <span class="door l"><svg viewBox="0 0 400 300" aria-hidden="true"><use href="#eyeEmblem"/></svg><i class="ringh"></i></span>
-        <span class="door r"><svg viewBox="0 0 400 300" aria-hidden="true"><use href="#eyeEmblem"/></svg><i class="ringh"></i></span>
+        <span class="door l" data-side="l"></span>
+        <span class="door r" data-side="r"></span>
+        <span class="seam"></span>
       </span>
       <span class="arch"></span>
     </button>
@@ -568,6 +599,39 @@ html.pavonis .emblem,html.pavonis .brand,html.pavonis .btn.solid,html.pavonis .o
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <radialGradient id="sealBg" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#2a1d0e"/><stop offset=".7" stop-color="#140d06"/><stop offset="1" stop-color="#070402"/></radialGradient>
+    <linearGradient id="gilt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1c4"/><stop offset=".45" stop-color="#e8c977"/><stop offset="1" stop-color="#8a6428"/></linearGradient>
+    <radialGradient id="irisG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6d0"/><stop offset=".28" stop-color="#ffd27a"/><stop offset=".62" stop-color="#c47a1c"/><stop offset=".9" stop-color="#5a2e06"/><stop offset="1" stop-color="#2a1404"/></radialGradient>
+    <radialGradient id="rayG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe6a8" stop-opacity=".85"/><stop offset="1" stop-color="#ffb84a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="studG" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fff1c4"/><stop offset=".5" stop-color="#a87d36"/><stop offset="1" stop-color="#2a1d0c"/></radialGradient>
+    <clipPath id="eyeClip"><path d="M-62 0C-36-38 36-38 62 0C36 30-36 30-62 0Z"/></clipPath>
+    <g id="seal">
+      <circle r="98" fill="url(#sealBg)" stroke="url(#gilt)" stroke-width="3"/>
+      <circle r="91" fill="none" stroke="#7d6233" stroke-width="1"/>
+      <g class="sealTicks" stroke="#b8934c" stroke-width="1.2"><line x1="91.0" y1="0.0" x2="80.0" y2="0.0"/><line x1="90.7" y1="7.9" x2="84.7" y2="7.4"/><line x1="89.6" y1="15.8" x2="83.7" y2="14.8"/><line x1="87.9" y1="23.6" x2="82.1" y2="22.0"/><line x1="85.5" y1="31.1" x2="79.9" y2="29.1"/><line x1="82.5" y1="38.5" x2="77.0" y2="35.9"/><line x1="78.8" y1="45.5" x2="69.3" y2="40.0"/><line x1="74.5" y1="52.2" x2="69.6" y2="48.8"/><line x1="69.7" y1="58.5" x2="65.1" y2="54.6"/><line x1="64.3" y1="64.3" x2="60.1" y2="60.1"/><line x1="58.5" y1="69.7" x2="54.6" y2="65.1"/><line x1="52.2" y1="74.5" x2="48.8" y2="69.6"/><line x1="45.5" y1="78.8" x2="40.0" y2="69.3"/><line x1="38.5" y1="82.5" x2="35.9" y2="77.0"/><line x1="31.1" y1="85.5" x2="29.1" y2="79.9"/><line x1="23.6" y1="87.9" x2="22.0" y2="82.1"/><line x1="15.8" y1="89.6" x2="14.8" y2="83.7"/><line x1="7.9" y1="90.7" x2="7.4" y2="84.7"/><line x1="0.0" y1="91.0" x2="0.0" y2="80.0"/><line x1="-7.9" y1="90.7" x2="-7.4" y2="84.7"/><line x1="-15.8" y1="89.6" x2="-14.8" y2="83.7"/><line x1="-23.6" y1="87.9" x2="-22.0" y2="82.1"/><line x1="-31.1" y1="85.5" x2="-29.1" y2="79.9"/><line x1="-38.5" y1="82.5" x2="-35.9" y2="77.0"/><line x1="-45.5" y1="78.8" x2="-40.0" y2="69.3"/><line x1="-52.2" y1="74.5" x2="-48.8" y2="69.6"/><line x1="-58.5" y1="69.7" x2="-54.6" y2="65.1"/><line x1="-64.3" y1="64.3" x2="-60.1" y2="60.1"/><line x1="-69.7" y1="58.5" x2="-65.1" y2="54.6"/><line x1="-74.5" y1="52.2" x2="-69.6" y2="48.8"/><line x1="-78.8" y1="45.5" x2="-69.3" y2="40.0"/><line x1="-82.5" y1="38.5" x2="-77.0" y2="35.9"/><line x1="-85.5" y1="31.1" x2="-79.9" y2="29.1"/><line x1="-87.9" y1="23.6" x2="-82.1" y2="22.0"/><line x1="-89.6" y1="15.8" x2="-83.7" y2="14.8"/><line x1="-90.7" y1="7.9" x2="-84.7" y2="7.4"/><line x1="-91.0" y1="0.0" x2="-80.0" y2="0.0"/><line x1="-90.7" y1="-7.9" x2="-84.7" y2="-7.4"/><line x1="-89.6" y1="-15.8" x2="-83.7" y2="-14.8"/><line x1="-87.9" y1="-23.6" x2="-82.1" y2="-22.0"/><line x1="-85.5" y1="-31.1" x2="-79.9" y2="-29.1"/><line x1="-82.5" y1="-38.5" x2="-77.0" y2="-35.9"/><line x1="-78.8" y1="-45.5" x2="-69.3" y2="-40.0"/><line x1="-74.5" y1="-52.2" x2="-69.6" y2="-48.8"/><line x1="-69.7" y1="-58.5" x2="-65.1" y2="-54.6"/><line x1="-64.3" y1="-64.3" x2="-60.1" y2="-60.1"/><line x1="-58.5" y1="-69.7" x2="-54.6" y2="-65.1"/><line x1="-52.2" y1="-74.5" x2="-48.8" y2="-69.6"/><line x1="-45.5" y1="-78.8" x2="-40.0" y2="-69.3"/><line x1="-38.5" y1="-82.5" x2="-35.9" y2="-77.0"/><line x1="-31.1" y1="-85.5" x2="-29.1" y2="-79.9"/><line x1="-23.6" y1="-87.9" x2="-22.0" y2="-82.1"/><line x1="-15.8" y1="-89.6" x2="-14.8" y2="-83.7"/><line x1="-7.9" y1="-90.7" x2="-7.4" y2="-84.7"/><line x1="-0.0" y1="-91.0" x2="-0.0" y2="-80.0"/><line x1="7.9" y1="-90.7" x2="7.4" y2="-84.7"/><line x1="15.8" y1="-89.6" x2="14.8" y2="-83.7"/><line x1="23.6" y1="-87.9" x2="22.0" y2="-82.1"/><line x1="31.1" y1="-85.5" x2="29.1" y2="-79.9"/><line x1="38.5" y1="-82.5" x2="35.9" y2="-77.0"/><line x1="45.5" y1="-78.8" x2="40.0" y2="-69.3"/><line x1="52.2" y1="-74.5" x2="48.8" y2="-69.6"/><line x1="58.5" y1="-69.7" x2="54.6" y2="-65.1"/><line x1="64.3" y1="-64.3" x2="60.1" y2="-60.1"/><line x1="69.7" y1="-58.5" x2="65.1" y2="-54.6"/><line x1="74.5" y1="-52.2" x2="69.6" y2="-48.8"/><line x1="78.8" y1="-45.5" x2="69.3" y2="-40.0"/><line x1="82.5" y1="-38.5" x2="77.0" y2="-35.9"/><line x1="85.5" y1="-31.1" x2="79.9" y2="-29.1"/><line x1="87.9" y1="-23.6" x2="82.1" y2="-22.0"/><line x1="89.6" y1="-15.8" x2="83.7" y2="-14.8"/><line x1="90.7" y1="-7.9" x2="84.7" y2="-7.4"/></g>
+      <circle r="74" fill="none" stroke="url(#gilt)" stroke-width="1.6"/>
+      <g fill="url(#rayG)"><path d="M29.6 -5.0L73.9 -4.1L73.9 4.1L29.6 5.0Z"/><path d="M29.7 4.4L64.4 14.6L63.0 19.5L27.9 11.0Z"/><path d="M28.1 10.5L66.1 33.4L61.9 40.5L23.1 19.1Z"/><path d="M23.5 18.6L48.4 44.8L44.8 48.4L18.6 23.5Z"/><path d="M19.1 23.1L40.5 61.9L33.4 66.1L10.5 28.1Z"/><path d="M11.0 27.9L19.5 63.0L14.6 64.4L4.4 29.7Z"/><path d="M5.0 29.6L4.1 73.9L-4.1 73.9L-5.0 29.6Z"/><path d="M-4.4 29.7L-14.6 64.4L-19.5 63.0L-11.0 27.9Z"/><path d="M-10.5 28.1L-33.4 66.1L-40.5 61.9L-19.1 23.1Z"/><path d="M-18.6 23.5L-44.8 48.4L-48.4 44.8L-23.5 18.6Z"/><path d="M-23.1 19.1L-61.9 40.5L-66.1 33.4L-28.1 10.5Z"/><path d="M-27.9 11.0L-63.0 19.5L-64.4 14.6L-29.7 4.4Z"/><path d="M-29.6 5.0L-73.9 4.1L-73.9 -4.1L-29.6 -5.0Z"/><path d="M-29.7 -4.4L-64.4 -14.6L-63.0 -19.5L-27.9 -11.0Z"/><path d="M-28.1 -10.5L-66.1 -33.4L-61.9 -40.5L-23.1 -19.1Z"/><path d="M-23.5 -18.6L-48.4 -44.8L-44.8 -48.4L-18.6 -23.5Z"/><path d="M-19.1 -23.1L-40.5 -61.9L-33.4 -66.1L-10.5 -28.1Z"/><path d="M-11.0 -27.9L-19.5 -63.0L-14.6 -64.4L-4.4 -29.7Z"/><path d="M-5.0 -29.6L-4.1 -73.9L4.1 -73.9L5.0 -29.6Z"/><path d="M4.4 -29.7L14.6 -64.4L19.5 -63.0L11.0 -27.9Z"/><path d="M10.5 -28.1L33.4 -66.1L40.5 -61.9L19.1 -23.1Z"/><path d="M18.6 -23.5L44.8 -48.4L48.4 -44.8L23.5 -18.6Z"/><path d="M23.1 -19.1L61.9 -40.5L66.1 -33.4L28.1 -10.5Z"/><path d="M27.9 -11.0L63.0 -19.5L64.4 -14.6L29.7 -4.4Z"/></g>
+      <g id="sealEye">
+        <path d="M-62 0C-36-38 36-38 62 0C36 30-36 30-62 0Z" fill="#0b0704"/>
+        <g clip-path="url(#eyeClip)">
+          <g id="sealIris">
+            <circle r="27" fill="url(#irisG)"/>
+            <g stroke="#5a2e06" stroke-width=".8" opacity=".75"><line x1="10.0" y1="0.0" x2="25.0" y2="0.0"/><line x1="9.9" y1="1.4" x2="20.8" y2="2.9"/><line x1="9.6" y1="2.8" x2="20.2" y2="5.8"/><line x1="9.1" y1="4.1" x2="22.8" y2="10.2"/><line x1="8.5" y1="5.3" x2="17.8" y2="11.1"/><line x1="7.7" y1="6.4" x2="16.1" y2="13.5"/><line x1="6.7" y1="7.4" x2="16.7" y2="18.6"/><line x1="5.6" y1="8.3" x2="11.7" y2="17.4"/><line x1="4.4" y1="9.0" x2="9.2" y2="18.9"/><line x1="3.1" y1="9.5" x2="7.7" y2="23.8"/><line x1="1.7" y1="9.8" x2="3.6" y2="20.7"/><line x1="0.3" y1="10.0" x2="0.7" y2="21.0"/><line x1="-1.0" y1="9.9" x2="-2.6" y2="24.9"/><line x1="-2.4" y1="9.7" x2="-5.1" y2="20.4"/><line x1="-3.7" y1="9.3" x2="-7.9" y2="19.5"/><line x1="-5.0" y1="8.7" x2="-12.5" y2="21.7"/><line x1="-6.2" y1="7.9" x2="-12.9" y2="16.5"/><line x1="-7.2" y1="6.9" x2="-15.1" y2="14.6"/><line x1="-8.1" y1="5.9" x2="-20.2" y2="14.7"/><line x1="-8.8" y1="4.7" x2="-18.5" y2="9.9"/><line x1="-9.4" y1="3.4" x2="-19.7" y2="7.2"/><line x1="-9.8" y1="2.1" x2="-24.5" y2="5.2"/><line x1="-10.0" y1="0.7" x2="-20.9" y2="1.5"/><line x1="-10.0" y1="-0.7" x2="-20.9" y2="-1.5"/><line x1="-9.8" y1="-2.1" x2="-24.5" y2="-5.2"/><line x1="-9.4" y1="-3.4" x2="-19.7" y2="-7.2"/><line x1="-8.8" y1="-4.7" x2="-18.5" y2="-9.9"/><line x1="-8.1" y1="-5.9" x2="-20.2" y2="-14.7"/><line x1="-7.2" y1="-6.9" x2="-15.1" y2="-14.6"/><line x1="-6.2" y1="-7.9" x2="-12.9" y2="-16.5"/><line x1="-5.0" y1="-8.7" x2="-12.5" y2="-21.7"/><line x1="-3.7" y1="-9.3" x2="-7.9" y2="-19.5"/><line x1="-2.4" y1="-9.7" x2="-5.1" y2="-20.4"/><line x1="-1.0" y1="-9.9" x2="-2.6" y2="-24.9"/><line x1="0.3" y1="-10.0" x2="0.7" y2="-21.0"/><line x1="1.7" y1="-9.8" x2="3.6" y2="-20.7"/><line x1="3.1" y1="-9.5" x2="7.7" y2="-23.8"/><line x1="4.4" y1="-9.0" x2="9.2" y2="-18.9"/><line x1="5.6" y1="-8.3" x2="11.7" y2="-17.4"/><line x1="6.7" y1="-7.4" x2="16.7" y2="-18.6"/><line x1="7.7" y1="-6.4" x2="16.1" y2="-13.5"/><line x1="8.5" y1="-5.3" x2="17.8" y2="-11.1"/><line x1="9.1" y1="-4.1" x2="22.8" y2="-10.2"/><line x1="9.6" y1="-2.8" x2="20.2" y2="-5.8"/><line x1="9.9" y1="-1.4" x2="20.8" y2="-2.9"/></g>
+            <circle r="27" fill="none" stroke="#7ff6ff" stroke-width="1.6" opacity=".85"/>
+            <circle r="17" fill="none" stroke="#fff1c4" stroke-width=".7" stroke-dasharray="2 2" opacity=".7"/>
+            <circle id="sealPupil" r="9" fill="#050302"/>
+            <circle cx="-8" cy="-9" r="3.2" fill="#fff"/><circle cx="7" cy="7" r="1.4" fill="#fff" opacity=".8"/>
+          </g>
+          <path id="sealLid" d="M-64-40H64V0C36-38-36-38-64 0Z" fill="#1c140b" transform="scale(1 0)"/>
+        </g>
+        <path d="M-62 0C-36-38 36-38 62 0C36-30-36-30-62 0Z" fill="url(#gilt)"/>
+        <path d="M-62 0C-36 30 36 30 62 0C36 25-36 25-62 0Z" fill="url(#gilt)" opacity=".85"/>
+        <path d="M62 0C72 2 82 8 90 20C80 12 70 8 60 4Z" fill="url(#gilt)"/>
+        <path d="M-62 0C-70-3-76-9-78-18C-72-10-66-6-60-3Z" fill="url(#gilt)"/>
+        <path d="M-44-40C-20-56 20-56 46-40" fill="none" stroke="url(#gilt)" stroke-width="2.4" stroke-linecap="round"/>
+        <g stroke="url(#gilt)" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M-47.1 -16.0Q-48.2 -26.4 -51.0 -29.0"/><path d="M-35.3 -22.9Q-36.1 -34.9 -38.3 -37.9"/><path d="M-23.6 -27.9Q-24.1 -41.2 -25.0 -44.5"/><path d="M-11.8 -31.0Q-12.0 -45.1 -11.1 -48.6"/><path d="M0.0 -32.0Q0.0 -46.4 3.0 -50.0"/><path d="M11.8 -31.0Q12.0 -45.1 17.1 -48.6"/><path d="M23.6 -27.9Q24.1 -41.2 31.0 -44.5"/><path d="M35.3 -22.9Q36.1 -34.9 44.3 -37.9"/><path d="M47.1 -16.0Q48.2 -26.4 57.0 -29.0"/></g>
+      </g>
+    </g>
     <g id="eyeEmblem" fill="none" stroke="#e8c977" stroke-linecap="round" stroke-linejoin="round">
       <g stroke-width="1.6" opacity=".55">
         <path d="M200 40V8M200 40l-40-30M200 40l40-30M200 40l-75-12M200 40l75-12M200 40l-100 10M200 40l100 10"/>
@@ -828,9 +892,27 @@ python3 gen.py --only 42</pre>
       <h3>The Eighth Gate opens on OpenSea</h3>
       <p class="muted">The plates will be minted on OpenSea, on Robinhood Chain. I have not yet revealed the hour. The generator, the metadata and the seal are already on record for any initiate to examine.</p>
       <div class="grid"><div><b>OpenSea</b><span>Marketplace</span></div><div><b>Robinhood Chain</b><span>Chain</span></div><div><b>To be revealed</b><span>Date</span></div></div>
+      <div class="phases" aria-label="The phases of the mint">
+        <div><i>Phase I · GTD</i><b>The Inner Sanctum</b><span>A guaranteed plate. Seats are won only by beating Hermes at the Game of Thoth.</span><em>Seats taken: <span class="seat-sanctum">…</span></em></div>
+        <div><i>Phase II · FCFS</i><b>The Outer Court</b><span>First come, first served, for names in the Book and for the victors the knucklebones did not seat inside.</span><em>Names: <span class="seat-court">…</span></em></div>
+        <div><i>Phase III · Public</i><b>The Open Gate</b><span>Every seeker, when the hour comes.</span><em>&nbsp;</em></div>
+      </div>
       <div class="ctas" style="justify-content:center"><a class="btn solid" href="#thoth">Play the Game of Thoth</a><a class="btn" href="https://github.com/M4S4T0-V01D/codex-arcanum" target="_blank" rel="noopener">Follow the work on GitHub</a><button class="btn cy" type="button" data-hx>Speak with Hermes</button></div>
     </div>
-  </div>
+    <form class="book hud reveal" id="bookForm" autocomplete="off">
+      <div class="kicker">Liber Nominum</div>
+      <h3>The Book of Names</h3>
+      <p class="muted">Write your name in my book, and you will stand in the Outer Court when the gate opens. If you want the Inner Sanctum, beat me at the Game of Thoth.</p>
+      <div class="row">
+        <input id="bookX" type="text" spellcheck="false" placeholder="@handle on X" aria-label="Your X handle" required>
+        <input id="bookAddr" type="text" spellcheck="false" placeholder="0x… your EVM address" aria-label="Your EVM address" required>
+        <input id="bookHp" class="hp" type="text" tabindex="-1" aria-hidden="true">
+        <button class="btn solid" type="submit">Inscribe my name</button>
+      </div>
+      <div class="book-out" id="bookOut" aria-live="polite"></div>
+      <p class="small">Your address and handle are kept only to build the allowlist for the mint. Use a 0x address: ENS names cannot be used on OpenSea allowlists.</p>
+    </form>
+    </div>
 </section>
 
 <!-- THE GAME OF THOTH -->
@@ -969,64 +1051,188 @@ function typeInto(node, text, speed = 22, done) {
   tick(); return () => { stop = true; };
 }
 
-/* ====== audio: synthesized, off until asked for ====== */
-const AU = {
-  ctx: null, on: false,
-  ensure() {
-    if (this.ctx) { if (this.ctx.state === "suspended") this.ctx.resume(); return true; }
+/* ====== audio: a synthesized temple, off until asked for ======
+   Bed: organ drone + wordless choir + wind + random singing bowls + glass shimmer,
+   all in D Hijaz (Phrygian dominant), through a long dark hall and a ping-pong echo.
+   The drone climbs a "music of the spheres" scale as the visitor ascends. */
+const AU = (() => {
+  const HIJAZ = [0, 1, 4, 5, 7, 8, 10]; // semitones above D
+  const SPHERE_TONE = [0, 2, 4, 5, 7, 8, 10, 12]; // Moon … Saturn, Ogdoad (the octave)
+  const D2 = 73.42;
+  const hz = st => D2 * Math.pow(2, st / 12);
+  let c, out, verb, echo, bed, dr = [], choir = [], formants = [], root = D2, timers = [], on = false;
+  const now = () => c.currentTime;
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const env = (g, t, peak, a, d) => { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); };
+  function noiseBuf(sec, brown) {
+    const b = c.createBuffer(2, c.sampleRate * sec, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch); let last = 0;
+      for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; d[i] = brown ? (last = (last + 0.02 * w) / 1.02) * 3.5 : w; }
+    }
+    return b;
+  }
+  function hall(sec) { // dark stereo tail with a little pre-delay and early reflections
+    const len = c.sampleRate * sec | 0, b = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch); let lp = 0;
+      for (let i = 0; i < len; i++) {
+        const t = i / len, pre = i < c.sampleRate * 0.03 ? 0 : 1;
+        lp += (Math.random() * 2 - 1 - lp) * (0.35 - 0.3 * t); // darker as it decays
+        d[i] = lp * Math.pow(1 - t, 2.2) * pre * (1 + (i % 2203 < 40 && t < 0.08 ? 3 : 0));
+      }
+    }
+    return b;
+  }
+  function source(buf, loop) { const s = c.createBufferSource(); s.buffer = buf; s.loop = !!loop; return s; }
+  function pan(node, p) { const n = c.createStereoPanner(); n.pan.value = p; node.connect(n); return n; }
+
+  function build() {
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return false;
-    const c = this.ctx = new C();
-    this.master = c.createGain(); this.master.gain.value = 0; this.master.connect(c.destination);
-    const verb = c.createConvolver(), len = c.sampleRate * 3.2 | 0, ir = c.createBuffer(2, len, c.sampleRate);
-    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
-    verb.buffer = ir; const wet = c.createGain(); wet.gain.value = .55; verb.connect(wet).connect(this.master); this.verb = verb;
-    this.drone = c.createGain(); this.drone.gain.value = 0;
-    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 480; lp.Q.value = 3;
-    [[55, "sine", .5], [82.41, "sine", .3], [110, "triangle", .1], [164.8, "sine", .05], [55.4, "sine", .25]].forEach(([f, ty, g]) => {
-      const o = c.createOscillator(); o.type = ty; o.frequency.value = f; const gg = c.createGain(); gg.gain.value = g; o.connect(gg).connect(lp); o.start();
+    c = new C();
+    const comp = c.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(c.destination);
+    out = c.createGain(); out.gain.value = 0; out.connect(comp);
+    verb = c.createConvolver(); verb.buffer = hall(6); const vw = c.createGain(); vw.gain.value = 0.9; verb.connect(vw).connect(out);
+    // ping-pong echo, 3/8 of a slow beat
+    const dl = c.createDelay(2), drr = c.createDelay(2), fb = c.createGain(), mg = c.createChannelMerger(2), ef = c.createBiquadFilter();
+    dl.delayTime.value = 0.42; drr.delayTime.value = 0.63; fb.gain.value = 0.42; ef.type = "lowpass"; ef.frequency.value = 3200;
+    echo = c.createGain(); echo.connect(dl); dl.connect(ef).connect(drr); drr.connect(fb).connect(dl);
+    dl.connect(mg, 0, 0); drr.connect(mg, 0, 1); mg.connect(out); mg.connect(verb);
+    bed = c.createGain(); bed.gain.value = 0; bed.connect(out); bed.connect(verb);
+
+    // organ drone: detuned saws + sub + fifth, breathing lowpass
+    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 340; lp.Q.value = 5; lp.connect(bed);
+    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.045; lg.gain.value = 170; lfo.connect(lg).connect(lp.frequency); lfo.start();
+    [[1, "sawtooth", 0.16, -7], [1, "sawtooth", 0.16, 7], [0.5, "sine", 0.5, 0], [1.5, "sawtooth", 0.06, 3], [2, "triangle", 0.05, -4]].forEach(([m, type, g, det]) => {
+      const o = c.createOscillator(), gg = c.createGain(); o.type = type; o.frequency.value = root * m; o.detune.value = det; gg.gain.value = g;
+      o.connect(gg).connect(lp); o.start(); dr.push([o, m]);
     });
-    const lfo = c.createOscillator(); lfo.frequency.value = .06; const lg = c.createGain(); lg.gain.value = 240; lfo.connect(lg).connect(lp.frequency); lfo.start();
-    const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-    const ns = c.createBufferSource(); ns.buffer = nb; ns.loop = true; const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 340; bp.Q.value = .7;
-    const ng = c.createGain(); ng.gain.value = .045; ns.connect(bp).connect(ng).connect(this.drone); ns.start();
-    lp.connect(this.drone); this.drone.connect(this.master); this.drone.connect(verb);
+    // wordless choir: saws through vowel formants that morph between "ah" and "oo"
+    const vowels = [[730, 1090, 2440], [300, 870, 2240]];
+    const cg = c.createGain(); cg.gain.value = 0.0; cg.connect(bed);
+    const swell = c.createOscillator(), sw = c.createGain(); swell.frequency.value = 0.021; sw.gain.value = 0.05; swell.connect(sw).connect(cg.gain); swell.start();
+    const morph = c.createOscillator(), mo = c.createGain(); morph.frequency.value = 0.033; morph.start();
+    vowels[0].forEach((f, i) => {
+      const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 9 - i * 2;
+      const m = c.createGain(); m.gain.value = (vowels[1][i] - f) / 2; morph.connect(m).connect(bp.frequency);
+      const g = c.createGain(); g.gain.value = [1, 0.5, 0.25][i]; bp.connect(g).connect(cg); formants.push(bp);
+    });
+    [[2, -9], [3, 6], [4.8, -4], [6, 9]].forEach(([m, det]) => {
+      const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = root * m; o.detune.value = det;
+      const vib = c.createOscillator(), vg = c.createGain(); vib.frequency.value = rnd(4.5, 5.5); vg.gain.value = 4; vib.connect(vg).connect(o.detune); vib.start();
+      formants.forEach(bp => o.connect(bp)); o.start(); choir.push([o, m]);
+    });
+    cg.gain.setValueAtTime(0.055, now()); mo.gain.value = 1;
+    // wind through the columns
+    const wind = source(noiseBuf(4, true), true), wbp = c.createBiquadFilter(), wg = c.createGain();
+    wbp.type = "bandpass"; wbp.frequency.value = 420; wbp.Q.value = 1.4; wg.gain.value = 0.05;
+    const wl = c.createOscillator(), wlg = c.createGain(); wl.frequency.value = 0.07; wlg.gain.value = 280; wl.connect(wlg).connect(wbp.frequency); wl.start();
+    wind.connect(wbp).connect(wg).connect(bed); wind.start();
     return true;
-  },
-  set(on) {
-    this.on = on;
-    $$(".snd").forEach(b => { b.setAttribute("aria-pressed", on); b.textContent = "Sound · " + (on ? "on" : "off"); });
-    if (on) { if (!this.ensure()) return; const t = this.ctx.currentTime; this.master.gain.setTargetAtTime(.85, t, .3); this.drone.gain.setTargetAtTime(.2, t, 2); }
-    else if (this.ctx) this.master.gain.setTargetAtTime(0, this.ctx.currentTime, .3);
-  },
-  knock() {
-    if (!this.on) return; const c = this.ctx, t = c.currentTime;
-    const o = c.createOscillator(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + .14);
-    const g = c.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(1.2, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + .3);
-    o.connect(g); g.connect(this.master); g.connect(this.verb); o.start(t); o.stop(t + .35);
-  },
-  blip() {
-    if (!this.on) return; const c = this.ctx, t = c.currentTime;
-    const o = c.createOscillator(); o.type = "square"; o.frequency.setValueAtTime(1320, t); o.frequency.exponentialRampToValueAtTime(880, t + .06);
-    const g = c.createGain(); g.gain.setValueAtTime(.03, t); g.gain.exponentialRampToValueAtTime(.0001, t + .09);
-    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + .1);
-  },
-  bell(f = 523.25, v = .25) {
-    if (!this.on) return; const c = this.ctx, t = c.currentTime;
-    [[1, 1], [2.76, .45], [5.4, .22], [8.93, .1]].forEach(([m, a], k) => {
-      const o = c.createOscillator(); o.frequency.value = f * m; const g = c.createGain();
-      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v * a, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 4 / (k + 1));
-      o.connect(g); g.connect(this.master); g.connect(this.verb); o.start(t); o.stop(t + 4.2);
+  }
+
+  // ---- voices ----------------------------------------------------------------
+  function bowl(f, v = 0.2, p = 0, decay = 9, toEcho = 0.2) {
+    const t = now(), g = c.createGain(); env(g, t, v, 0.006, decay);
+    const dest = pan(g, p); dest.connect(out); dest.connect(verb);
+    if (toEcho) { const e = c.createGain(); e.gain.value = toEcho; dest.connect(e).connect(echo); }
+    [[1, 1, 0], [1.003, 0.6, 0], [2.71, 0.4, 0.5], [2.716, 0.3, 0.5], [5.15, 0.15, 0.7], [8.9, 0.06, 0.85]].forEach(([m, a, short]) => {
+      const o = c.createOscillator(), og = c.createGain(); o.frequency.value = f * m; og.gain.value = a;
+      og.gain.setValueAtTime(a, t); og.gain.exponentialRampToValueAtTime(0.0001, t + decay * (1 - short * 0.8));
+      o.connect(og).connect(g); o.start(t); o.stop(t + decay + 0.5);
     });
-  },
-  swell() {
-    if (!this.on) return; const c = this.ctx, t = c.currentTime;
-    [110, 164.8, 220, 277.2, 329.6, 440].forEach((f, i) => {
-      const o = c.createOscillator(); o.type = i % 2 ? "sine" : "triangle"; o.frequency.value = f; const g = c.createGain();
-      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.09, t + 1.8); g.gain.exponentialRampToValueAtTime(.0001, t + 6.5);
-      o.connect(g); g.connect(this.master); g.connect(this.verb); o.start(t); o.stop(t + 7);
-    });
-  },
-};
+  }
+  function noiseHit(t, dur, type, freq, q, v, p = 0, toVerb = 1) {
+    const s = source(noiseBuf(Math.max(0.2, dur + 0.1))), f = c.createBiquadFilter(), g = c.createGain();
+    f.type = type; f.frequency.value = freq; f.Q.value = q; env(g, t, v, 0.002, dur);
+    s.connect(f).connect(g); const d = pan(g, p); d.connect(out); if (toVerb) d.connect(verb); s.start(t); s.stop(t + dur + 0.2);
+    return f;
+  }
+  function tone(t, f, type, v, a, d, p = 0, wet = 0.5) {
+    const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f; env(g, t, v, a, d);
+    o.connect(g); const dd = pan(g, p); dd.connect(out); const w = c.createGain(); w.gain.value = wet; dd.connect(w).connect(verb);
+    o.start(t); o.stop(t + a + d + 0.1); return o;
+  }
+  const scale = (deg, oct = 2) => root * Math.pow(2, oct + (HIJAZ[((deg % 7) + 7) % 7] + 12 * Math.floor(deg / 7)) / 12);
+
+  function ambience() { // occasional bowls, glass, and a distant gong
+    const loop = (fn, a, b) => { const go = () => { if (on) fn(); timers.push(setTimeout(go, rnd(a, b))); }; timers.push(setTimeout(go, rnd(a / 2, b))); };
+    loop(() => bowl(scale(Math.floor(rnd(0, 7)), 2), rnd(0.04, 0.08), rnd(-0.7, 0.7), rnd(7, 11), 0.15), 7000, 16000);
+    loop(() => { const t = now(), base = Math.floor(rnd(0, 7)); for (let i = 0; i < 3; i++) tone(t + i * rnd(0.08, 0.2), scale(base + i * 2, 5), "sine", 0.012, 0.01, 1.4, rnd(-0.9, 0.9), 0.8); }, 4000, 9000);
+    loop(() => { const t = now(); [0.5, 0.75, 1.19, 1.71].forEach((m, i) => tone(t, root * m, "sine", 0.05 / (i + 1), 2.5, 7, rnd(-0.3, 0.3), 1)); }, 38000, 70000);
+  }
+
+  // ---- public ------------------------------------------------------------------
+  const api = {
+    get on() { return on; },
+    set(v) {
+      on = v;
+      $$(".snd").forEach(b => { b.setAttribute("aria-pressed", v); b.textContent = "Sound · " + (v ? "on" : "off"); });
+      if (v) {
+        if (!c && !build()) return;
+        if (c.state === "suspended") c.resume();
+        out.gain.setTargetAtTime(0.9, now(), 0.4); bed.gain.setTargetAtTime(0.32, now(), 2.5);
+        api.sphere(Math.max(0, activeSphere), true); ambience();
+      } else if (c) { out.gain.setTargetAtTime(0, now(), 0.35); timers.forEach(clearTimeout); timers = []; }
+    },
+    sphere(k, quiet) { // glide the drone and choir to this sphere's tone
+      if (!on || !c) return;
+      root = hz(SPHERE_TONE[k] || 0);
+      dr.forEach(([o, m]) => o.frequency.setTargetAtTime(root * m, now(), 1.6));
+      choir.forEach(([o, m]) => o.frequency.setTargetAtTime(root * m, now(), 2.2));
+      if (!quiet) bowl(root * 4, 0.07, 0, 10, 0.25);
+    },
+    tick() { if (!on) return; const t = now(); tone(t, 2637, "sine", 0.025, 0.002, 0.12, rnd(-0.3, 0.3), 0.6); noiseHit(t, 0.03, "highpass", 6000, 1, 0.02, 0, 0); },
+    blip() { api.tick(); },
+    knock() { // a heavy bronze door: low thump, rattle of the leaf, long hall
+      if (!on) return; const t = now();
+      const o = tone(t, 120, "sine", 0.9, 0.002, 0.35, 0, 1); o.frequency.exponentialRampToValueAtTime(42, t + 0.25);
+      noiseHit(t, 0.12, "bandpass", 850, 1.2, 0.35); noiseHit(t, 0.4, "lowpass", 260, 0.7, 0.4);
+      tone(t, 196, "triangle", 0.05, 0.003, 1.2, 0, 1);
+    },
+    open() { // stone grinding open, a choir bloom, a gong
+      if (!on) return; const t = now();
+      const s = source(noiseBuf(5, true)), f = c.createBiquadFilter(), g = c.createGain();
+      f.type = "lowpass"; f.Q.value = 3; f.frequency.setValueAtTime(140, t); f.frequency.exponentialRampToValueAtTime(900, t + 3.2);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + 4.2);
+      s.connect(f).connect(g); g.connect(out); g.connect(verb); s.start(t); s.stop(t + 4.5);
+      [0, 4, 7, 11, 14].forEach((d, i) => tone(t + 0.4 + i * 0.12, scale(d, 2), "sawtooth", 0.025, 1.8, 4.5, (i - 2) * 0.3, 1));
+      [0.5, 0.71, 1.0, 1.42].forEach((m, i) => tone(t + 0.9, root * m, "sine", 0.12 / (i + 1), 0.02, 7, 0, 1));
+      bowl(scale(0, 3), 0.18, 0, 10, 0.3);
+    },
+    swell() { api.open(); },
+    bell(f = 523.25, v = 0.2) { if (on) bowl(f, v * 0.7, rnd(-0.3, 0.3), 6); },
+    place() { if (!on) return; const t = now(); tone(t, 90, "sine", 0.35, 0.003, 0.18, 0, 0.4); noiseHit(t, 0.08, "highpass", 2500, 0.8, 0.06); },
+    capture(mine) { if (on) bowl(scale(mine ? 4 : 1, 3), 0.12, mine ? 0.3 : -0.3, 5, 0.3); },
+    serpent() { // a hiss that coils and bites
+      if (!on) return; const t = now();
+      const f = noiseHit(t, 1.1, "bandpass", 4800, 2, 0.12, 0); f.frequency.exponentialRampToValueAtTime(2200, t + 1);
+      for (let i = 0; i < 9; i++) noiseHit(t + 0.05 + i * 0.045, 0.02, "bandpass", 3200, 4, 0.05, rnd(-0.5, 0.5), 0);
+      tone(t, scale(1, 1), "sawtooth", 0.06, 0.01, 1.2, 0, 1);
+    },
+    mirror() { // shimmer up, then its reflection down
+      if (!on) return; const t = now();
+      [0, 2, 4, 6].forEach((d, i) => { tone(t + i * 0.07, scale(d, 4), "sine", 0.05, 0.02, 1.1, -0.6, 0.9); tone(t + 0.45 + i * 0.07, scale(6 - d, 4), "sine", 0.05, 0.02, 1.1, 0.6, 0.9); });
+    },
+    shuffle() { if (!on) return; const t = now(); for (let i = 0; i < 18; i++) noiseHit(t + i * 0.028 + rnd(0, 0.01), 0.025, "bandpass", rnd(2200, 4200), 1.5, 0.05, rnd(-0.4, 0.4), 0); },
+    rattle() { // knucklebones skittering across stone
+      if (!on) return; const t = now();
+      for (let i = 0; i < 11; i++) { const at = t + Math.pow(i / 11, 1.6) * 0.9; noiseHit(at, 0.018, "bandpass", rnd(1400, 2600), 6, 0.18 * (1 - i / 14), rnd(-0.6, 0.6)); }
+    },
+    seat(sanctum) {
+      if (!on) return; const t = now();
+      if (sanctum) { [0, 2, 4, 7, 9, 11, 14].forEach((d, i) => tone(t + i * 0.11, scale(d, 3), "triangle", 0.06, 0.01, 2.6, (i - 3) * 0.2, 0.9)); bowl(scale(0, 2), 0.2, 0, 12, 0.35); api.open(); }
+      else { bowl(scale(4, 3), 0.14, 0, 8, 0.3); [0, 4].forEach((d, i) => tone(t + i * 0.18, scale(d, 3), "sine", 0.05, 0.02, 2.4, 0, 0.9)); }
+    },
+    victory() { if (!on) return; const t = now(); [0, 1, 4, 5, 7, 8, 11, 14].forEach((d, i) => tone(t + i * 0.09, scale(d, 3), "triangle", 0.05, 0.01, 1.8, (i - 4) * 0.15, 0.9)); bowl(scale(0, 2), 0.16, 0, 10); },
+    defeat() { if (!on) return; const t = now(); [7, 5, 4, 1, 0].forEach((d, i) => tone(t + i * 0.22, scale(d, 2), "sine", 0.06, 0.02, 2.2, 0, 1)); tone(t, root * 0.5, "sine", 0.12, 1, 5, 0, 1); },
+    quill() { // a scribe's pen scratching
+      if (!on) return; const t = now();
+      for (let i = 0; i < 14; i++) noiseHit(t + i * 0.05 + rnd(0, 0.03), rnd(0.02, 0.06), "highpass", rnd(3500, 6500), 0.7, 0.035, 0.2, 0);
+    },
+  };
+  return api;
+})();
 $$(".snd").forEach(b => b.addEventListener("click", () => AU.set(!AU.on)));
 
 /* ====== sky: WebGL nebula + 2D orrery & glyph rain, tinted by the current sphere ====== */
@@ -1147,6 +1353,7 @@ function updateSphere() {
     document.documentElement.style.setProperty("--sph", SPH[k].ink);
     $("#sphereName").textContent = "Sphere of " + SPH[k].name.replace(/^The /, "the ");
     $$("#ladder button").forEach((b, i) => { b.classList.toggle("on", i === k); b.classList.toggle("done", i < k); });
+    AU.sphere(k);
     if (entered && k > 0 && !heard.has(k)) { heard.add(k); transmit(k); }
   }
   $("#nav").classList.toggle("solid", scrollY > 40);
@@ -1244,13 +1451,15 @@ const HX = (() => {
     } catch { say("The folio would not open. Ask me again in a moment."); }
   };
   const CMD = {
-    help: () => say("Speak these words: who · gates · gate <1–8> · plate <1–777> · oracle · play · laws · tabula · mint · seal · sound · clear. There are other words, and the wise will find them."),
+    help: () => say("Speak these words: who · gates · gate <1–8> · plate <1–777> · oracle · play · laws · inscribe · seats · tabula · mint · seal · sound · clear. There are other words, and the wise will find them."),
     who: () => say("I am Hermes Trismegistus, Thoth of the Egyptians, thrice great: greatest philosopher, greatest priest, greatest king. I wrote the Emerald Tablet and the books of the Corpus. This temple is my latest writing."),
     gates: () => say(SPH.map((s, i) => `${ROMAN(i + 1)} ${s.name}`).join(" · ") + ". Say gate and a number, and I will carry you there."),
     gate: (a) => { const n = parseInt(a, 10); if (n >= 1 && n <= 8) { say(`To the sphere of ${SPH[n - 1].name.replace(/^The /, "the ")}.`); go(n); } else say("There are eight gates, numbered one to eight."); },
     plate: (a) => { const n = parseInt(a, 10); n ? plateInfo(n) : say("Name a plate by its number, from 1 to 777."); },
     oracle: () => { say("Go down to the Eighth Gate. I have shuffled the deck for you."); go(8); setTimeout(() => $("#reshuffle").click(), 900); },
     play: () => { say("You would play Thoth at his own game? Come to my hall. I have dealt the cards."); document.getElementById("thoth").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); },
+    inscribe: () => { say("Go to the end of the Eighth Gate and write your name in my book. It will stand you in the Outer Court."); document.getElementById("bookForm").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); },
+    seats: async () => { try { const r = await gate("/stats"); say(`The Inner Sanctum holds ${r.sanctum} of ${r.sanctumCap}. The Outer Court holds ${r.court} names.`); } catch { say("The scribe is away. Ask me again soon."); } },
     laws: () => say("Three laws rule my square. Correspondence: as above, so below, so a capture in the top or bottom row turns its mirror in the opposite row. The Ouroboros: a 1 devours a 9 or an A. The Quintessence: the centre gives +1 to every edge."),
     tabula: () => say("It is true, without falsehood, certain and most true: that which is below is like that which is above, and that which is above is like that which is below, to accomplish the miracle of the one thing."),
     mint: () => say("Seven hundred and seventy-seven plates will be minted on OpenSea, on Robinhood Chain. The hour is still sealed. When the Eighth Gate opens, I will tell the initiates first."),
@@ -1496,9 +1705,147 @@ $("#copyProv").onclick = async e => {
 
 
 /* ====== The Game of Thoth ====== */
+// The Game of Thoth: rules, deal and Hermes' AI.
+// Shared by the site (build_site.py inlines this file, stripping `export`)
+// and the gate worker (which imports it to replay and verify claimed wins).
+// Everything here must be deterministic given the seed.
+
+const LOSHU = [4, 9, 2, 3, 5, 7, 8, 1, 6];
+const DIRS = [[-1, 0], [0, 1], [1, 0], [0, -1]]; // top, right, bottom, left
+
+/** Seeded PRNG: xmur3 string hash -> mulberry32. */
+function rng32(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let a = h >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const cardVal = (c, i, cell) => c.sides[i] + (cell === 4 ? 1 : 0);
+const power = c => c.sides.reduce((x, y) => x + y, 0);
+
+/** Captures made by `card` laid on `cell` (board not yet changed by them). */
+function captures(board, cell, card) {
+  const r = Math.floor(cell / 3), col = cell % 3, direct = [];
+  let ouro = false;
+  DIRS.forEach(([dr, dc], i) => {
+    const rr = r + dr, cc = col + dc;
+    if (rr < 0 || rr > 2 || cc < 0 || cc > 2) return;
+    const n = rr * 3 + cc, o = board[n];
+    if (!o || o.owner === card.owner) return;
+    const a = cardVal(card, i, cell), d = cardVal(o, (i + 2) % 4, n);
+    if (a > d) direct.push(n);
+    else if (a === 1 && d >= 9) { direct.push(n); ouro = true; } // the Ouroboros
+  });
+  const mirror = []; // Correspondence: as above, so below
+  direct.forEach(n => {
+    const rr = Math.floor(n / 3);
+    if (rr === 1) return;
+    const m = (2 - rr) * 3 + (n % 3), o = board[m];
+    if (o && o.owner !== card.owner && m !== cell && !direct.includes(m) && !mirror.includes(m)) mirror.push(m);
+  });
+  return { direct, mirror, ouro };
+}
+
+/** Deal two balanced hands of five from `pool` ([{id, name, sides, level}], sorted by id). */
+function deal(seed, pool) {
+  const rnd = rng32(seed + ":deal");
+  let you, her, tries = 0;
+  do {
+    const p = pool.slice();
+    for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+    you = p.slice(0, 5); her = p.slice(5, 10); tries++;
+  } while (Math.abs(you.reduce((s, c) => s + power(c), 0) - her.reduce((s, c) => s + power(c), 0)) > 6 && tries < 40);
+  const mk = (c, owner) => ({ id: c.id, name: c.name, sides: c.sides.slice(), level: c.level, owner });
+  return { you: you.map(c => mk(c, "you")), her: her.map(c => mk(c, "her")), first: rnd() < 0.5 ? "you" : "her" };
+}
+
+/** Hermes' move: greedy captures, wary of exposing weak edges, a little noise. */
+function aiChoose(board, hand, rnd) {
+  let best = null;
+  hand.forEach((c, i) => board.forEach((o, cell) => {
+    if (o) return;
+    const b = board.slice(), card = { ...c, owner: "her" };
+    b[cell] = card;
+    const res = captures(b, cell, card);
+    let sc = (res.direct.length + res.mirror.length) * 10 + (cell === 4 ? 1.5 : 0);
+    const r = Math.floor(cell / 3), col = cell % 3;
+    DIRS.forEach(([dr, dc], k) => {
+      const rr = r + dr, cc = col + dc;
+      if (rr < 0 || rr > 2 || cc < 0 || cc > 2 || b[rr * 3 + cc]) return;
+      const v = cardVal(card, k, cell);
+      sc -= Math.max(0, 7 - v) * 0.7 + (v >= 9 ? 1 : 0);
+    });
+    sc -= power(c) * 0.04;
+    sc += rnd() * 1.2;
+    if (!best || sc > best.sc) best = { i, cell, sc };
+  }));
+  return best;
+}
+
+/** Lay hand[who][idx] on cell and apply every capture. Returns the capture result. */
+function apply(board, hands, who, idx, cell) {
+  const card = hands[who].splice(idx, 1)[0];
+  card.owner = who;
+  board[cell] = card;
+  const res = captures(board, cell, card);
+  res.direct.concat(res.mirror).forEach(n => { board[n].owner = who; });
+  return res;
+}
+
+const score = (board, hands) => ({
+  you: board.filter(c => c && c.owner === "you").length + hands.you.length,
+  her: board.filter(c => c && c.owner === "her").length + hands.her.length,
+});
+
+/** Replay a whole game from its seed and the player's moves ([{card, cell}]). */
+function replay(seed, pool, moves) {
+  const d = deal(seed, pool), hands = { you: d.you, her: d.her }, board = Array(9).fill(null);
+  const ai = rng32(seed + ":ai");
+  let turn = d.first, mi = 0;
+  while (board.some(c => !c)) {
+    if (turn === "her") {
+      const m = aiChoose(board, hands.her, ai);
+      apply(board, hands, "her", m.i, m.cell);
+    } else {
+      const mv = moves[mi++];
+      if (!mv) return { ok: false, reason: "the game is unfinished" };
+      const idx = hands.you.findIndex(c => c.id === mv.card);
+      if (idx < 0 || !Number.isInteger(mv.cell) || mv.cell < 0 || mv.cell > 8 || board[mv.cell]) {
+        return { ok: false, reason: "an illegal move" };
+      }
+      apply(board, hands, "you", idx, mv.cell);
+    }
+    turn = turn === "you" ? "her" : "you";
+  }
+  if (mi !== moves.length) return { ok: false, reason: "moves after the end" };
+  return { ok: true, ...score(board, hands) };
+}
+
+const GATE = "https://codex-arcanum-gate.masato-void.workers.dev";
+const gate = async (path, body) => {
+  const r = await fetch(GATE + path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "The gate did not answer.");
+  return j;
+};
+const SEATS = { sanctum: "The Inner Sanctum", court: "The Outer Court" };
+async function refreshSeats() {
+  try {
+    const s = await gate("/stats");
+    $$(".seat-sanctum").forEach(n => n.textContent = `${s.sanctum} / ${s.sanctumCap}`);
+    $$(".seat-court").forEach(n => n.textContent = s.court);
+  } catch {}
+}
 (() => {
-  const LOSHU = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-  const DIRS = [[-1, 0], [0, 1], [1, 0], [0, -1]]; // top, right, bottom, left
   const SIDE = ["top", "right", "bottom", "left"];
   const boardEl = $("#tBoard"), youEl = $("#tYou"), herEl = $("#tHer"), sayEl = $("#tSay");
   const backSvg = '<svg viewBox="0 0 400 300" aria-hidden="true"><use href="#eyeEmblem"/></svg>';
@@ -1506,45 +1853,41 @@ $("#copyProv").onclick = async e => {
   const saveRec = () => { try { localStorage.setItem("thoth-record", JSON.stringify(rec)); } catch {} };
   const LINES = {
     start: ["Sit, initiate. I will let the Sun decide who lays the first card.", "The square is empty. It will not stay that way.", "I have played this game with Osiris. Do not expect mercy."],
-    youFirst: ["The Sun favours you. Lay the first card.", "You begin. Choose well, because the square remembers."],
+    youFirst: ["The Sun favours you. Choose a card, then a cell.", "You begin. Choose a card, then a cell, and choose well."],
     herFirst: ["The Moon favours me. I begin.", "I lay the first card, as I wrote the first word."],
     herTake: ["Mine.", "As I foresaw.", "Number does not lie, and neither do I.", "The square turns toward me."],
     youTake: ["Well struck.", "Hm. You have read my books.", "A fair capture. Enjoy it.", "The pupil learns."],
     ouro: ["The serpent eats its tail! The least has devoured the greatest.", "Ouroboros: one swallows nine."],
     mirror: ["As above, so below. The mirror turns as well.", "Correspondence! What is done above is done below."],
     think: ["Hermes considers the square…", "Hermes counts in silence…", "Hermes turns a card in his fingers…"],
-    win: ["You have beaten Thoth at his own game. Take a plate from my hand. You have earned it.", "Well played, initiate. The square is yours, and so is this plate."],
+    win: ["You have beaten Thoth at his own game.", "Well played, initiate. The square is yours."],
     lose: ["The house of Thoth wins, as it always has. Deal again when you are ready.", "Not today. The square kept its secrets."],
     draw: ["An even square: as above, so below. We will meet again."],
   };
-  let board, hands, turn, sel, busy, over;
+  let G, board, hands, turn, sel, busy, over, ai, moves;
   const fmt = v => (v >= 10 ? "A" : String(v));
-  const val = (c, i, cell) => c.sides[i] + (cell === 4 ? 1 : 0);
   const speak = (txt, tag = "ΕΡΜΗΣ") => { sayEl.replaceChildren(el("b", { text: tag }), txt); };
-  const fresh = t => ({ id: t.id, name: t.name, sides: t.card.slice(), level: t.level, owner: null });
 
-  function deal() {
-    let pool = D.tokens.slice(), a, b, tries = 0;
-    do {
-      pool.sort(() => Math.random() - .5);
-      a = pool.slice(0, 5).map(fresh); b = pool.slice(5, 10).map(fresh);
-      tries++;
-    } while (Math.abs(a.reduce((s, c) => s + c.sides.reduce((x, y) => x + y), 0) - b.reduce((s, c) => s + c.sides.reduce((x, y) => x + y), 0)) > 6 && tries < 40);
-    a.forEach(c => c.owner = "you"); b.forEach(c => c.owner = "her");
-    hands = { you: a, her: b }; board = Array(9).fill(null); sel = null; over = false; busy = false;
-    turn = Math.random() < .5 ? "you" : "her";
+  async function newGame() {
+    busy = true; over = false; sel = null;
+    speak("Hermes shuffles the deck…", "···");
+    try { G = await gate("/thoth/start", {}); }
+    catch { G = { practice: true, seed: "practice-" + Math.random().toString(36).slice(2) }; Object.assign(G, deal(G.seed, D.tokens.map(t => ({ id: t.id, name: t.name, sides: t.card, level: t.level })))); }
+    hands = { you: G.you, her: G.her }; board = Array(9).fill(null); turn = G.first; moves = [];
+    ai = rng32(G.seed + ":ai"); busy = false;
     render();
-    speak(pick(LINES.start) + " " + (turn === "you" ? pick(LINES.youFirst) : pick(LINES.herFirst)));
+    speak(pick(LINES.start) + " " + (turn === "you" ? pick(LINES.youFirst) : pick(LINES.herFirst)) +
+      (G.practice ? " (The scribe is away: this is a practice game, and no seat can be won from it.)" : ""));
     $("#tRec").textContent = `Your record against Hermes · ${rec.w} won · ${rec.l} lost · ${rec.d} drawn`;
     if (turn === "her") herTurn();
   }
 
   function cardEl(c, cell, live) {
-    const label = `${c.name}. ${SIDE.map((s, i) => `${s} ${fmt(val(c, i, cell))}`).join(", ")}. ${DEG[c.level]}.`;
+    const label = `${c.name}. ${SIDE.map((s, i) => `${s} ${fmt(cardVal(c, i, cell))}`).join(", ")}. ${DEG[c.level]}.`;
     const b = el("button", { class: `tc ${c.owner}`, type: "button", "aria-label": label });
     b.style.backgroundImage = `url(${th(c.id)})`;
     if (live) b.append(lazyVid(sm(c.id), th(c.id)));
-    ["t", "r", "b", "l"].forEach((k, i) => b.append(el("span", { class: "n " + k + (cell === 4 ? " boost" : ""), text: fmt(val(c, i, cell)) })));
+    ["t", "r", "b", "l"].forEach((k, i) => b.append(el("span", { class: "n " + k + (cell === 4 ? " boost" : ""), text: fmt(cardVal(c, i, cell)) })));
     b.append(el("span", { class: "pips", text: "✶".repeat(c.level) }));
     return b;
   }
@@ -1555,11 +1898,7 @@ $("#copyProv").onclick = async e => {
       const cell = el("div", { class: "cell" + (i === 4 ? " q" : "") + (open ? " open" : ""), role: open ? "button" : null, tabindex: open ? "0" : null,
         "aria-label": c ? null : `Empty cell of ${LOSHU[i]}` + (i === 4 ? ", the Quintessence" : "") });
       cell.append(el("span", { class: "ls", text: LOSHU[i] }));
-      if (c) {
-        const ce = cardEl(c, i, true); ce.tabIndex = -1;
-        if (fx[i]) ce.classList.add(...fx[i]);
-        cell.append(ce);
-      }
+      if (c) { const ce = cardEl(c, i, true); ce.tabIndex = -1; if (fx[i]) ce.classList.add(...fx[i]); cell.append(ce); }
       if (open) {
         cell.onclick = () => play(sel, i);
         cell.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(sel, i); } };
@@ -1570,57 +1909,36 @@ $("#copyProv").onclick = async e => {
       const ce = cardEl(c, -1, false);
       if (sel === i) ce.classList.add("sel");
       ce.disabled = turn !== "you" || busy || over;
-      ce.onclick = () => { sel = sel === i ? null : i; AU.blip(); render(); };
+      ce.onclick = () => { sel = sel === i ? null : i; AU.tick(); render(); };
       return ce;
     }));
     herEl.replaceChildren(...hands.her.map(() => el("div", { class: "tc back", html: backSvg, "aria-hidden": "true" })));
     herEl.setAttribute("aria-label", `Hermes holds ${hands.her.length} cards`);
-    const score = w => board.filter(c => c && c.owner === w).length + hands[w].length;
-    $("#tYouScore").textContent = score("you"); $("#tHerScore").textContent = score("her");
+    const sc = score(board, hands);
+    $("#tYouScore").textContent = sc.you; $("#tHerScore").textContent = sc.her;
   }
 
-  function captures(b, cell, card) {
-    const r = Math.floor(cell / 3), col = cell % 3, direct = [];
-    let ouro = false;
-    DIRS.forEach(([dr, dc], i) => {
-      const rr = r + dr, cc = col + dc;
-      if (rr < 0 || rr > 2 || cc < 0 || cc > 2) return;
-      const n = rr * 3 + cc, o = b[n];
-      if (!o || o.owner === card.owner) return;
-      const a = val(card, i, cell), d = val(o, (i + 2) % 4, n);
-      if (a > d) direct.push(n);
-      else if (a === 1 && d >= 9) { direct.push(n); ouro = true; }
-    });
-    const mirror = [];
-    direct.forEach(n => {
-      const rr = Math.floor(n / 3);
-      if (rr === 1) return;
-      const m = (2 - rr) * 3 + (n % 3), o = b[m];
-      if (o && o.owner !== card.owner && m !== cell && !direct.includes(m) && !mirror.includes(m)) mirror.push(m);
-    });
-    return { direct, mirror, ouro };
-  }
-
-  function play(handIdx, cell, who = "you") {
+  function play(idx, cell, who = "you") {
     if (busy || over || board[cell]) return;
     busy = true; sel = null;
-    const card = hands[who].splice(handIdx, 1)[0];
-    board[cell] = card;
-    const res = captures(board, cell, card);
-    AU.knock();
+    if (who === "you") moves.push({ card: hands.you[idx].id, cell });
+    const card = hands[who].splice(idx, 1)[0];
+    card.owner = who; board[cell] = card;
+    const res = captures(board, cell, card);  // same rule the gate replays
+    AU.place();
     render({ [cell]: ["land"] });
     setTimeout(() => {
       if (res.direct.length) {
         res.direct.forEach(n => board[n].owner = who);
         const fx = {}; res.direct.forEach(n => fx[n] = ["flipping"].concat(res.ouro ? ["ouro"] : []));
-        render(fx); AU.bell(who === "you" ? 523.25 : 392, .12); SKY.flash = .12;
+        render(fx); res.ouro ? AU.serpent() : AU.capture(who === "you"); SKY.flash = .12;
         speak(res.ouro ? pick(LINES.ouro) : pick(who === "you" ? LINES.youTake : LINES.herTake));
       }
       setTimeout(() => {
         if (res.mirror.length) {
           res.mirror.forEach(n => board[n].owner = who);
           const fx = {}; res.mirror.forEach(n => fx[n] = ["flipping", "mirror"]);
-          render(fx); AU.bell(659.25, .12); SKY.flash = .18;
+          render(fx); AU.mirror(); SKY.flash = .18;
           speak(pick(LINES.mirror));
         }
         setTimeout(() => {
@@ -1629,7 +1947,7 @@ $("#copyProv").onclick = async e => {
           turn = who === "you" ? "her" : "you";
           render();
           if (turn === "her") herTurn();
-          else if (!res.direct.length && !res.mirror.length) speak("Your move.", "ΕΡΜΗΣ");
+          else if (!res.direct.length && !res.mirror.length) speak("Your move.");
         }, res.mirror.length ? 650 : 150);
       }, res.direct.length ? 650 : 100);
     }, 420);
@@ -1638,48 +1956,66 @@ $("#copyProv").onclick = async e => {
   function herTurn() {
     busy = true; render();
     speak(pick(LINES.think), "···");
-    setTimeout(() => {
-      let best = null;
-      hands.her.forEach((c, i) => board.forEach((o, cell) => {
-        if (o) return;
-        const b = board.slice(); const card = { ...c, owner: "her" }; b[cell] = card;
-        const res = captures(b, cell, card);
-        let sc = (res.direct.length + res.mirror.length) * 10 + (cell === 4 ? 1.5 : 0);
-        const r = Math.floor(cell / 3), col = cell % 3;
-        DIRS.forEach(([dr, dc], k) => {
-          const rr = r + dr, cc = col + dc;
-          if (rr < 0 || rr > 2 || cc < 0 || cc > 2 || b[rr * 3 + cc]) return;
-          const v = val(card, k, cell);
-          sc -= Math.max(0, 7 - v) * .7 + (v >= 9 ? 1 : 0);
-        });
-        sc -= c.sides.reduce((x, y) => x + y) * .04;
-        sc += Math.random() * 1.2;
-        if (!best || sc > best.sc) best = { i, cell, sc };
-      }));
-      busy = false;
-      play(best.i, best.cell, "her");
-    }, 900 + Math.random() * 500);
+    setTimeout(() => { const m = aiChoose(board, hands.her, ai); busy = false; play(m.i, m.cell, "her"); }, 900 + Math.random() * 500);
+  }
+
+  function claimForm() {
+    const addr = el("input", { type: "text", inputmode: "text", autocomplete: "off", spellcheck: "false", placeholder: "0x… your EVM address", "aria-label": "Your EVM address" });
+    const xh = el("input", { type: "text", autocomplete: "off", spellcheck: "false", placeholder: "@handle on X (optional)", "aria-label": "Your X handle, optional" });
+    const hp = el("input", { type: "text", tabindex: "-1", autocomplete: "off", class: "hp", "aria-hidden": "true" });
+    const btn = el("button", { class: "btn solid", type: "submit", text: "Cast the knucklebones" });
+    const out = el("div", { class: "claim-out", "aria-live": "polite" });
+    const form = el("form", { class: "claim hud" },
+      el("p", { text: "Write your address in my book and I will cast the knucklebones. They will seat you in the Inner Sanctum or in the Outer Court." }),
+      el("div", { class: "row" }, addr, xh, hp, btn), out);
+    form.onsubmit = async e => {
+      e.preventDefault(); btn.disabled = true; out.textContent = "The knucklebones are in the air…"; AU.rattle();
+      try {
+        const r = await gate("/thoth/claim", { seed: G.seed, iat: G.iat, sig: G.sig, moves, address: addr.value.trim(), x: xh.value.trim(), hp: hp.value });
+        AU.seat(r.phase === "sanctum"); SKY.flash = r.phase === "sanctum" ? .8 : .45;
+        out.replaceChildren(el("div", { class: `seat ${r.phase}` }, el("span", { text: r.kind === "GTD" ? "Guaranteed" : "First come, first served" }), el("b", { text: r.label })),
+          r.kept ? "You already held a seat in the Inner Sanctum, and you keep it." : r.upgraded ? "You have risen from the Outer Court to the Inner Sanctum." : "Your address is written in my book.");
+        form.querySelector(".row").remove(); refreshSeats();
+        HX.log("her", `You won your seat: ${r.label}.`);
+      } catch (err) { out.textContent = err.message; btn.disabled = false; }
+    };
+    return form;
   }
 
   function end() {
     over = true; render();
-    const you = board.filter(c => c.owner === "you").length + hands.you.length;
-    const her = board.filter(c => c.owner === "her").length + hands.her.length;
-    const ctl = $("#tSay");
-    if (you > her) {
-      rec.w++; AU.swell(); SKY.flash = .6;
-      const prize = board.filter(c => c.owner === "you").sort((a, b) => b.level - a.level || b.sides.reduce((x, y) => x + y) - a.sides.reduce((x, y) => x + y))[0];
+    const sc = score(board, hands);
+    if (sc.you > sc.her) {
+      rec.w++; AU.victory(); SKY.flash = .6;
+      const prize = board.filter(c => c.owner === "you").sort((a, b) => b.level - a.level)[0];
       speak(pick(LINES.win) + " ");
-      ctl.append(el("a", { href: "#", text: `Receive ${prize.name} →`, onclick: e => { e.preventDefault(); openPlate(prize.id); } }));
+      sayEl.append(el("a", { href: "#", text: `See ${prize.name} →`, onclick: e => { e.preventDefault(); openPlate(prize.id); } }));
+      if (!G.practice) sayEl.after(claimForm());
       HX.log("her", "You have beaten me at the Game of Thoth. It has not happened often.");
-    } else if (her > you) { rec.l++; speak(pick(LINES.lose)); AU.bell(196, .2); }
+    } else if (sc.you < sc.her) { rec.l++; speak(pick(LINES.lose)); AU.defeat(); }
     else { rec.d++; speak(pick(LINES.draw)); }
     saveRec();
-    $("#tRec").textContent = `Final square ${you} – ${her} · record ${rec.w} won · ${rec.l} lost · ${rec.d} drawn`;
+    $("#tRec").textContent = `Final square ${sc.you} – ${sc.her} · record ${rec.w} won · ${rec.l} lost · ${rec.d} drawn`;
   }
 
-  $("#tNew").onclick = () => { AU.knock(); deal(); };
-  deal();
+  $("#tNew").onclick = () => { $$(".claim").forEach(n => n.remove()); AU.shuffle(); newGame(); };
+  newGame();
+})();
+
+/* ====== The Book of Names ====== */
+(() => {
+  const form = $("#bookForm"), out = $("#bookOut"), btn = form.querySelector("button");
+  form.onsubmit = async e => {
+    e.preventDefault(); btn.disabled = true; out.textContent = "The scribe dips his pen…"; AU.quill();
+    try {
+      const r = await gate("/signup", { x: $("#bookX").value.trim(), address: $("#bookAddr").value.trim(), hp: $("#bookHp").value });
+      out.replaceChildren(el("div", { class: `seat ${r.phase}` }, el("span", { text: r.kind === "GTD" ? "Guaranteed" : "First come, first served" }), el("b", { text: r.label })),
+        r.already ? "Your name was already in my book." : "Your name is written in my book.");
+      AU.seat(r.phase === "sanctum"); refreshSeats();
+    } catch (err) { out.textContent = err.message; }
+    btn.disabled = false;
+  };
+  refreshSeats();
 })();
 
 /* ====== the word of the stone ====== */
@@ -1697,6 +2033,67 @@ function pavonis() {
   });
 })();
 
+
+/* ====== the temple doors: bronze leaves with a living eye across the seam ====== */
+const doorEye = (() => {
+  const glyph = (x, y, k) => [ // a small carved mark, one of a dozen shapes
+    `M${x - 5} ${y}h10M${x} ${y - 6}v12`, `M${x} ${y - 6}l6 11h-12z`, `M${x - 5} ${y - 5}h10v10h-10z`, `M${x} ${y} m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0`,
+    `M${x - 6} ${y + 5}l6-11 6 11`, `M${x - 5} ${y - 6}q10 6 0 12`, `M${x} ${y - 6}v12M${x - 5} ${y - 2}h10`, `M${x - 6} ${y}q6-8 12 0q-6 8-12 0`,
+    `M${x - 5} ${y + 6}v-8a5 5 0 0 1 10 0v8`, `M${x - 6} ${y - 4}h12M${x - 6} ${y + 4}h12`, `M${x} ${y - 6}l5 6-5 6-5-6z`, `M${x - 5} ${y - 5}l10 10M${x + 5} ${y - 5}l-10 10`][k % 12];
+  function door(side) {
+    const L = side === "l", sx = L ? 200 : 0, outer = L ? 16 : 184, mir = x => (L ? x : 200 - x);
+    let studs = "", glyphs = "";
+    for (let y = 26; y <= 420; y += 22) studs += `<circle cx="${mir(30)}" cy="${y}" r="2.6" fill="url(#studG)"/>`;
+    for (let x = 40; x <= 180; x += 20) studs += `<circle cx="${mir(x)}" cy="430" r="2.6" fill="url(#studG)"/><circle cx="${mir(x)}" cy="290" r="2.2" fill="url(#studG)"/>`;
+    for (let i = 0, y = 60; y < 420; y += 22, i++) glyphs += `<path d="${glyph(outer, y, i * 5 + (L ? 0 : 7))}"/>`;
+    const panel = (x, y, w, h) => { const X = L ? x : 200 - x - w;
+      return `<rect x="${X}" y="${y}" width="${w}" height="${h}" rx="3" fill="#0d0905" stroke="#3a2a14" stroke-width="3"/>
+        <rect x="${X + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" rx="2" fill="none" stroke="url(#gilt)" stroke-width="1.4"/>
+        <rect x="${X + 8}" y="${y + 8}" width="${w - 16}" height="${h - 16}" rx="1" fill="none" stroke="#b8934c" stroke-width=".6" opacity=".6"/>`; };
+    return `<svg viewBox="0 0 200 440" preserveAspectRatio="${L ? "xMaxYMid" : "xMinYMid"} slice" aria-hidden="true">
+      <defs><linearGradient id="br${side}" x1="${L ? 0 : 1}" x2="${L ? 1 : 0}"><stop offset="0" stop-color="#0c0805"/><stop offset=".55" stop-color="#2e2213"/><stop offset="1" stop-color="#1a120a"/></linearGradient></defs>
+      <rect width="200" height="440" fill="url(#br${side})"/>
+      <rect x="${L ? 4 : 0}" y="4" width="196" height="432" fill="none" stroke="url(#gilt)" stroke-width="1.6"/>
+      <g class="glyphs">${glyphs}</g>
+      ${panel(42, 300, 146, 118)}
+      <path class="trace" d="M${mir(52)} 410V330H${mir(120)}V312H${mir(178)}"/>
+      <path class="trace b" d="M${mir(178)} 404H${mir(140)}V360H${mir(64)}"/>
+      <path class="trace c" d="M${mir(30)} 60V250H${mir(70)}"/>
+      ${studs}
+      <use href="#seal" x="${sx}" y="170"/>
+      <circle cx="${mir(150)}" cy="282" r="9" fill="none" stroke="url(#gilt)" stroke-width="2.6"/>
+      <circle cx="${mir(150)}" cy="272" r="3" fill="url(#studG)"/>
+    </svg>`;
+  }
+  $$(".door").forEach(d => { d.innerHTML = door(d.dataset.side); });
+  // the eye lives: it follows the seeker, blinks, flares at each knock
+  const iris = document.getElementById("sealIris"), pupil = document.getElementById("sealPupil"), lid = document.getElementById("sealLid");
+  let tx = 0, ty = 0, cx = 0, cy = 0, pr = 9, prT = 9, blink = 0, alive = true;
+  const follow = e => {
+    const P = $("#portal"); if (!P) return;
+    const r = P.getBoundingClientRect(); if (!r.width) return;
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * 0.39), d = Math.hypot(dx, dy) || 1;
+    const k = Math.min(1, d / 300); tx = dx / d * 15 * k; ty = dy / d * 7 * k;
+  };
+  addEventListener("pointermove", follow, { passive: true });
+  const nextBlink = () => setTimeout(() => { blink = 1; nextBlink(); }, 2600 + Math.random() * 4200);
+  if (!REDUCED) nextBlink();
+  let bt = 0;
+  (function loop() {
+    if (!alive) return;
+    cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12; pr += (prT - pr) * 0.1;
+    iris.setAttribute("transform", `translate(${cx.toFixed(2)} ${cy.toFixed(2)})`);
+    pupil.setAttribute("r", pr.toFixed(2));
+    if (blink) { bt += 0.16; const v = bt < 1 ? bt : Math.max(0, 2 - bt); lid.setAttribute("transform", `scale(1 ${(v * 1.05).toFixed(3)})`); if (bt >= 2) { blink = 0; bt = 0; } }
+    requestAnimationFrame(loop);
+  })();
+  return {
+    flare(n) { prT = 5 - n; setTimeout(() => (prT = 9), 500); },
+    wake() { prT = 15; tx = 0; ty = 0; },
+    stop() { alive = false; removeEventListener("pointermove", follow); },
+  };
+})();
+
 /* ====== the threshold ====== */
 (() => {
   const T = $("#threshold"), portal = $("#portal"), dots = $$(".knocks i");
@@ -1704,11 +2101,11 @@ function pavonis() {
   let knocks = 0, done = false;
   const finish = (instant) => {
     if (done) return; done = true; store.set("initiated", "1");
-    if (instant) { T.classList.add("gone"); document.body.classList.remove("locked"); startHero(); setTimeout(() => T.remove(), 1500); return; }
-    T.classList.add("opening"); AU.swell(); AU.bell(392, .18);
+    if (instant) { T.classList.add("gone"); document.body.classList.remove("locked"); startHero(); setTimeout(() => { doorEye.stop(); T.remove(); }, 1500); return; }
+    T.classList.add("opening"); AU.open(); doorEye.wake();
     setTimeout(() => { SKY.flash = .9; }, 900);
     setTimeout(() => { T.classList.add("gone"); document.body.classList.remove("locked"); startHero(); }, 2100);
-    setTimeout(() => T.remove(), 3600);
+    setTimeout(() => { doorEye.stop(); T.remove(); }, 3600);
   };
   const deep = location.hash && location.hash !== "#gate-1";
   if (deep || REDUCED) { finish(true); return; }
@@ -1725,7 +2122,7 @@ function pavonis() {
     const r = portal.getBoundingClientRect();
     const rp = el("span", { class: "ripple" }); rp.style.left = ((e.clientX || r.left + r.width / 2) - r.left) + "px"; rp.style.top = ((e.clientY || r.top + r.height / 2) - r.top) + "px";
     portal.append(rp); setTimeout(() => rp.remove(), 1000);
-    AU.knock(); SKY.flash = .08 * knocks;
+    AU.knock(); SKY.flash = .08 * knocks; doorEye.flare(knocks);
     if (knocks === 3) { typeInto(tx, "> Three knocks. I hear you.\n> Enter, initiate. Leave your garments at each sphere.", 18); setTimeout(() => finish(false), 900); }
   });
   $("#skip").onclick = () => finish(true);

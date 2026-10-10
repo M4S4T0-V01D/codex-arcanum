@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS entries (
   source TEXT NOT NULL,
   wins INTEGER NOT NULL DEFAULT 0,
   created INTEGER NOT NULL,
-  updated INTEGER NOT NULL
+  updated INTEGER NOT NULL,
+  num INTEGER  -- place in the Book of Names, in order of inscription
 );
+CREATE UNIQUE INDEX IF NOT EXISTS entries_num ON entries(num);
 -- Every verified game seed can be claimed once.
 CREATE TABLE IF NOT EXISTS claims (seed TEXT PRIMARY KEY, address TEXT NOT NULL, ts INTEGER NOT NULL);
 -- Rate-limit buckets (route:ip:hour).

@@ -92,7 +92,7 @@ const randomHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b
 async function stats(env) {
   const rows = (await env.DB.prepare("SELECT phase, COUNT(*) AS n FROM entries GROUP BY phase").all()).results;
   const n = Object.fromEntries(rows.map(r => [r.phase, r.n]));
-  return { sanctum: n.sanctum || 0, court: n.court || 0, sanctumCap: +env.GTD_CAP, phases: PHASES };
+  return { sanctum: n.sanctum || 0, court: n.court || 0, names: (n.sanctum || 0) + (n.court || 0), sanctumCap: +env.GTD_CAP, phases: PHASES };
 }
 
 async function start(req, env) {
@@ -137,14 +137,15 @@ async function claim(req, env, body) {
   const won = roll < +env.GTD_ODDS && seated < +env.GTD_CAP ? "sanctum" : "court";
   const phase = prev && prev.phase === "sanctum" ? "sanctum" : won;
   await env.DB.batch([
-    env.DB.prepare(`INSERT INTO entries (address, x, phase, source, wins, created, updated) VALUES (?, ?, ?, 'thoth', 1, ?, ?)
+    env.DB.prepare(`INSERT INTO entries (address, x, phase, source, wins, created, updated, num) VALUES (?, ?, ?, 'thoth', 1, ?, ?, (SELECT COALESCE(MAX(num), 0) + 1 FROM entries))
       ON CONFLICT(address) DO UPDATE SET phase = ?, wins = wins + 1, updated = ?, x = COALESCE(?, x),
       source = CASE WHEN source = 'signup' THEN 'signup+thoth' ELSE source END`)
       .bind(address, x, phase, now, now, phase, now, x),
     BUMP(env),
   ]);
+  const { num } = await env.DB.prepare("SELECT num FROM entries WHERE address = ?").bind(address).first();
   return {
-    phase, ...PHASES[phase], score: [game.you, game.her],
+    num, phase, ...PHASES[phase], score: [game.you, game.her],
     kept: !!prev && prev.phase === "sanctum" && won !== "sanctum",
     upgraded: !!prev && prev.phase === "court" && phase === "sanctum",
   };
@@ -154,17 +155,18 @@ async function signup(req, env, body) {
   await limit(req, env, "signup");
   const { address, x } = cleanEntry(body, true);
   const now = Date.now();
-  const prev = await env.DB.prepare("SELECT phase, x FROM entries WHERE address = ?").bind(address).first();
+  const prev = await env.DB.prepare("SELECT phase, x, num FROM entries WHERE address = ?").bind(address).first();
   if (prev) {
     if (!prev.x) await env.DB.prepare("UPDATE entries SET x = ?, updated = ? WHERE address = ?").bind(x, now, address).run();
-    return { phase: prev.phase, ...PHASES[prev.phase], already: true };
+    return { num: prev.num, phase: prev.phase, ...PHASES[prev.phase], already: true };
   }
   await env.DB.batch([
-    env.DB.prepare("INSERT INTO entries (address, x, phase, source, wins, created, updated) VALUES (?, ?, 'court', 'signup', 0, ?, ?)")
+    env.DB.prepare("INSERT INTO entries (address, x, phase, source, wins, created, updated, num) VALUES (?, ?, 'court', 'signup', 0, ?, ?, (SELECT COALESCE(MAX(num), 0) + 1 FROM entries))")
       .bind(address, x, now, now),
     BUMP(env),
   ]);
-  return { phase: "court", ...PHASES.court, already: false };
+  const { num } = await env.DB.prepare("SELECT num FROM entries WHERE address = ?").bind(address).first();
+  return { num, phase: "court", ...PHASES.court, already: false };
 }
 
 // ---- export to the private allowlist repo ------------------------------------

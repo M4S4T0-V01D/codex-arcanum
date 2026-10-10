@@ -552,6 +552,17 @@ footer .whisper{font-style:italic;color:#5e5444}
 .hiero-picks span{position:absolute;bottom:2px;left:0;right:0;font:500 9px/1 var(--mono);color:var(--gold);text-shadow:0 0 4px #000}
 @media (max-width:900px){.hiero{grid-template-columns:minmax(0,1fr)}.hiero-picks{grid-template-columns:repeat(7,minmax(0,1fr))}}
 
+
+/* ---------- the page of the Book (share card) ---------- */
+.share{margin:18px auto 0;max-width:760px;text-align:center;animation:seatIn 1s cubic-bezier(.2,.7,.2,1)}
+.share .k{font:500 10.5px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--cy);margin-bottom:10px}
+.share img{width:100%;height:auto;border:1px solid var(--gold2);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 50px rgba(232,180,90,.18)}
+.share .acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.share .note{font-size:15px;color:var(--muted);margin-top:10px;min-height:1.2em}
+.btn.x{background:#000;border-color:#e8c977;color:#fff}
+.btn.x:hover{background:#fff;color:#000}
+.btn.x svg{width:14px;height:14px;fill:currentColor}
+
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--line2);background:#0b0807;color:var(--text);padding:0;max-width:min(1000px,calc(100vw - 24px));width:100%;max-height:calc(100vh - 24px);
   box-shadow:0 0 0 1px #000,0 40px 120px rgba(0,0,0,.8),0 0 120px rgba(232,180,90,.12)}
@@ -1773,6 +1784,162 @@ $("#copyProv").onclick = async e => {
 })();
 
 
+
+/* ====== the page of the Book: a share card drawn in the browser ====== */
+const SITE = "__SITE_URL__";
+const BOOK = (() => {
+  const W = 1600, H = 900;
+  const pad = n => String(n).padStart(4, "0");
+  const loadImg = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+  const romanDate = () => { const d = new Date(); return `${ROMAN(d.getDate())} · ${ROMAN(d.getMonth() + 1)} · ${ROMAN(d.getFullYear())}`; };
+  const gold = (c, x0, y0, x1, y1) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, "#fff3cc"); g.addColorStop(.45, "#e8c977"); g.addColorStop(1, "#a87d36"); return g; };
+  function spaced(c, text, x, y, sp, align = "left") {
+    if ("letterSpacing" in c) { c.letterSpacing = sp + "px"; c.textAlign = align; c.fillText(text, x, y); c.letterSpacing = "0px"; return; }
+    c.textAlign = align; c.fillText(text.split("").join(" "), x, y);
+  }
+  function fit(c, text, font, size, maxW) {
+    while (size > 18) { c.font = font.replace("SIZE", size); if (c.measureText(text).width <= maxW) break; size -= 2; }
+    return size;
+  }
+  function rosette(c, x, y, r) {
+    c.save(); c.translate(x, y);
+    c.fillStyle = "#0b0807"; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill();
+    c.strokeStyle = "#e8c977"; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, r, 0, 7); c.stroke();
+    c.lineWidth = 1; c.beginPath(); c.arc(0, 0, r * .75, 0, 7); c.stroke();
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; c.beginPath(); c.moveTo(Math.cos(a) * r * .25, Math.sin(a) * r * .25); c.lineTo(Math.cos(a) * r * (i % 2 ? .68 : .55), Math.sin(a) * r * (i % 2 ? .68 : .55)); c.stroke(); }
+    c.restore();
+  }
+  function seal(c, x, y, r, sanct) {  // a wax seal stamped with the eye in the triangle
+    c.save(); c.translate(x, y); c.rotate(-0.18);
+    const wg = c.createRadialGradient(-r * .3, -r * .3, r * .1, 0, 0, r);
+    wg.addColorStop(0, sanct ? "#fff1c4" : "#d24a3a"); wg.addColorStop(.6, sanct ? "#c99a48" : "#8c1e16"); wg.addColorStop(1, sanct ? "#6a4a1c" : "#4a0d08");
+    c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 20; c.shadowOffsetY = 6;
+    c.fillStyle = wg; c.beginPath();
+    for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, rr = r * (1 + 0.05 * Math.sin(i * 2.7)); c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+    c.fill(); c.shadowColor = "transparent";
+    c.strokeStyle = sanct ? "rgba(80,50,10,.8)" : "rgba(255,190,150,.55)"; c.lineWidth = 2;
+    c.beginPath(); c.arc(0, 0, r * .78, 0, 7); c.stroke();
+    c.beginPath(); c.moveTo(0, -r * .55); c.lineTo(r * .5, r * .32); c.lineTo(-r * .5, r * .32); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(-r * .26, r * .06); c.quadraticCurveTo(0, -r * .14, r * .26, r * .06); c.quadraticCurveTo(0, r * .22, -r * .26, r * .06); c.stroke();
+    c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(0, r * .07, r * .07, 0, 7); c.fill();
+    c.restore();
+  }
+  async function draw(info) {
+    await Promise.all(['700 120px "Cinzel Decorative"', '500 30px Cinzel', 'italic 500 80px "Cormorant Garamond"', '400 30px "Cormorant Garamond"', '500 18px "JetBrains Mono"']
+      .map(f => document.fonts.load(f).catch(() => {})));
+    const sanct = info.phase === "sanctum";
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const c = cv.getContext("2d");
+    const bg = c.createRadialGradient(W * .64, H * .42, 40, W * .6, H * .5, W * .85);
+    bg.addColorStop(0, sanct ? "#3a2a10" : "#26190d"); bg.addColorStop(.55, "#0e0a06"); bg.addColorStop(1, "#040302");
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    c.save(); c.translate(426, 440); c.globalCompositeOperation = "lighter";  // fine rays from behind the plate
+    for (let i = 0; i < 96; i++) {
+      const a = i / 96 * Math.PI * 2, L = (i % 2 ? 760 : 1250) + 80 * Math.sin(i * 1.7);
+      const rg = c.createLinearGradient(0, 0, Math.cos(a) * L, Math.sin(a) * L);
+      rg.addColorStop(0, `rgba(255,200,120,${i % 2 ? .07 : .12})`); rg.addColorStop(1, "rgba(255,200,120,0)");
+      c.strokeStyle = rg; c.lineWidth = i % 2 ? 2 : 4; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * L, Math.sin(a) * L); c.stroke();
+    }
+    c.restore();
+    for (let i = 0; i < 160; i++) {  // stars
+      const x = (Math.sin(i * 91.7) * .5 + .5) * W, y = (Math.sin(i * 47.3 + 2) * .5 + .5) * H, r = (Math.sin(i * 13.1) * .5 + .5) * 1.4 + .3;
+      c.fillStyle = `rgba(255,236,200,${.2 + .5 * (Math.sin(i * 7.7) * .5 + .5)})`; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    }
+    // the frame of the page
+    c.strokeStyle = "#e8c977"; c.lineWidth = 3; c.strokeRect(28, 28, W - 56, H - 56);
+    c.lineWidth = 1; c.strokeStyle = "rgba(232,201,119,.6)"; c.strokeRect(40, 40, W - 80, H - 80);
+    c.fillStyle = "rgba(232,201,119,.55)";
+    for (let x = 60; x < W - 50; x += 16) { c.beginPath(); c.arc(x, 34, 1.3, 0, 7); c.fill(); c.beginPath(); c.arc(x, H - 34, 1.3, 0, 7); c.fill(); }
+    for (let y = 60; y < H - 50; y += 16) { c.beginPath(); c.arc(34, y, 1.3, 0, 7); c.fill(); c.beginPath(); c.arc(W - 34, y, 1.3, 0, 7); c.fill(); }
+    [[40, 40], [W - 40, 40], [40, H - 40], [W - 40, H - 40]].forEach(([x, y]) => rosette(c, x, y, 22));
+    // the plate
+    const ones = (D.hierophants || []).map(h => h.id);
+    const best = (D.hero || []).filter(id => !ones.includes(id));
+    const pool = sanct && ones.length ? ones : (best.length ? best : D.tokens.map(t => t.id).filter(id => !ones.includes(id)));
+    const pid = pool[(info.num * 7 + 3) % pool.length];
+    const px = 96, py = 110, ps = 660;
+    try {
+      const img = await loadImg(poster(pid));
+      c.save(); c.shadowColor = "rgba(0,0,0,.7)"; c.shadowBlur = 50; c.shadowOffsetY = 18; c.fillStyle = "#000"; c.fillRect(px, py, ps, ps); c.restore();
+      c.drawImage(img, px, py, ps, ps);
+    } catch {}
+    c.strokeStyle = gold(c, px, py, px + ps, py + ps); c.lineWidth = 6; c.strokeRect(px - 8, py - 8, ps + 16, ps + 16);
+    c.lineWidth = 1.2; c.strokeStyle = "rgba(232,201,119,.7)"; c.strokeRect(px - 18, py - 18, ps + 36, ps + 36);
+    const pt = byId[pid];
+    c.fillStyle = "#b8934c"; c.font = '500 16px "JetBrains Mono"'; spaced(c, (pt ? pt.name : "").toUpperCase(), px + ps / 2, py + ps + 50, 3, "center");
+    seal(c, px + ps - 20, py + ps - 26, 62, sanct);
+    // the inscription
+    const X = 840, R = W - 96;
+    c.fillStyle = "#7ff6ff"; c.font = '500 18px "JetBrains Mono"'; spaced(c, "CODEX ARCANUM  ·  LIBER NOMINVM", X, 132, 5);
+    c.fillStyle = "#a8987a"; c.font = '500 30px Cinzel'; spaced(c, info.won ? "VICTOR OVER HERMES" : "INSCRIBED IN THE BOOK OF NAMES", X, 196, 4);
+    c.font = '700 168px "Cinzel Decorative"'; c.textAlign = "left";
+    c.save(); c.shadowColor = "rgba(255,190,90,.55)"; c.shadowBlur = 40;
+    c.fillStyle = gold(c, 0, 230, 0, 400); c.fillText("№ " + pad(info.num), X - 6, 380); c.restore();
+    const handle = info.handle ? "@" + info.handle.replace(/^@/, "") : "A nameless seeker";
+    const hs = fit(c, handle, 'italic 500 SIZEpx "Cormorant Garamond"', 86, R - X);
+    c.font = `italic 500 ${hs}px "Cormorant Garamond"`; c.fillStyle = "#f3e7cb"; c.textAlign = "left"; c.fillText(handle, X, 482);
+    const l1 = info.won ? `defeated Hermes at the Game of Thoth, ${info.score[0]} to ${info.score[1]},` : "has written their name in the Book of Hermes",
+      l2 = info.won ? "and the knucklebones have spoken." : "Trismegistus, and stands at the temple gate.";
+    const ls = Math.min(fit(c, l1, '400 SIZEpx "Cormorant Garamond"', 32, R - X), fit(c, l2, '400 SIZEpx "Cormorant Garamond"', 32, R - X));
+    c.font = `400 ${ls}px "Cormorant Garamond"`; c.fillStyle = "#cdbf9f"; c.textAlign = "left";
+    c.fillText(l1, X, 536);
+    c.fillText(l2, X, 576);
+    // the seat
+    const by = 618, bh = 120, bw = R - X;
+    c.fillStyle = sanct ? "rgba(255,225,150,.12)" : "rgba(127,246,255,.06)"; c.fillRect(X, by, bw, bh);
+    c.strokeStyle = sanct ? "#fff1c4" : "#7ff6ff"; c.lineWidth = 2; c.strokeRect(X, by, bw, bh);
+    if (sanct) { c.save(); c.shadowColor = "rgba(255,220,140,.7)"; c.shadowBlur = 30; c.strokeRect(X, by, bw, bh); c.restore(); }
+    c.fillStyle = "#a8987a"; c.font = '500 16px "JetBrains Mono"';
+    spaced(c, sanct ? "PHASE I  ·  GUARANTEED" : "PHASE II  ·  FIRST COME, FIRST SERVED", X + bw / 2, by + 38, 4, "center");
+    c.font = '700 50px "Cinzel Decorative"'; c.fillStyle = sanct ? gold(c, 0, by + 50, 0, by + 100) : "#7ff6ff"; c.textAlign = "center";
+    c.fillText(info.label || (sanct ? "The Inner Sanctum" : "The Outer Court"), X + bw / 2, by + 96);
+    c.fillStyle = "#8f816a"; c.font = '500 16px "JetBrains Mono"';
+    spaced(c, "INSCRIBED " + romanDate(), X, 778, 3);
+    spaced(c, "777 PLATES  ·  OPENSEA  ·  ROBINHOOD CHAIN", X, 810, 3);
+    c.fillStyle = "#e8c977"; c.font = '500 18px "JetBrains Mono"'; spaced(c, SITE.replace(/^https?:\/\//, "").replace(/\/$/, ""), X, 846, 2);
+    return cv;
+  }
+  function postText(info) {
+    const n = "№ " + pad(info.num);
+    if (info.won && info.phase === "sanctum") return `I defeated Hermes Trismegistus at the Game of Thoth and won a seat in the Inner Sanctum ✶ ${n} in the Book of Names.\n\n777 animated plates of the ancient mysteries. Can you beat him?`;
+    if (info.won) return `I defeated Hermes Trismegistus at the Game of Thoth ✶ ${n} in the Book of Names, seated in the Outer Court.\n\n777 animated plates of the ancient mysteries. Can you beat him?`;
+    return `I have written my name in the Book of Names ✶ ${n} in the Codex Arcanum.\n\nHermes Trismegistus has opened his temple: 777 animated plates of the ancient mysteries. Knock three times.`;
+  }
+  async function show(after, info) {
+    after.parentNode.querySelectorAll(".share").forEach(n => n.remove());
+    const box = el("div", { class: "share" }, el("div", { class: "k", text: "Your page in the Book of Names" }));
+    after.after(box);
+    let cv;
+    try { cv = await draw(info); } catch (e) { box.remove(); return; }
+    const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+    const fname = `codex-arcanum-book-${pad(info.num)}.png`;
+    const file = new File([blob], fname, { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+    const note = el("div", { class: "note", "aria-live": "polite" });
+    const text = postText(info);
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE)}&hashtags=CodexArcanum`;
+    const save = () => { const a = el("a", { href: url, download: fname }); document.body.append(a); a.click(); a.remove(); };
+    const mobile = matchMedia("(pointer: coarse)").matches;
+    const xBtn = el("button", { class: "btn x", type: "button", html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8.1-9.3L1 2h7l4.8 6.3zM17.7 20h1.7L6.4 3.9H4.6z"/></svg> Post on X' });
+    xBtn.onclick = async () => {
+      if (mobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], text: `${text}\n\n${SITE} #CodexArcanum` }); return; } catch (e) { if (e.name === "AbortError") return; }
+      }
+      let copied = false;
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); copied = true; } catch {}
+      }
+      if (!copied) save();
+      window.open(intent, "_blank", "noopener");
+      note.textContent = copied ? "Your page is copied: paste it into the post (Ctrl/⌘ + V)." : "Your page is saved: attach it to the post.";
+    };
+    const dl = el("button", { class: "btn", type: "button", text: "Save image", onclick: () => { save(); note.textContent = "Saved."; } });
+    box.append(el("img", { src: url, alt: `Page ${pad(info.num)} of the Book of Names` }), el("div", { class: "acts" }, xBtn, dl), note);
+    box.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" });
+  }
+  return { show, draw };
+})();
+
 /* ====== The Game of Thoth ====== */
 /*__ENGINE__*/
 const GATE = "__GATE_URL__";
@@ -1921,6 +2088,7 @@ async function refreshSeats() {
         out.replaceChildren(el("div", { class: `seat ${r.phase}` }, el("span", { text: r.kind === "GTD" ? "Guaranteed" : "First come, first served" }), el("b", { text: r.label })),
           r.kept ? "You already held a seat in the Inner Sanctum, and you keep it." : r.upgraded ? "You have risen from the Outer Court to the Inner Sanctum." : "Your address is written in my book.");
         form.querySelector(".row").remove(); refreshSeats();
+        BOOK.show(out, { ...r, handle: xh.value.trim(), won: true });
         HX.log("her", `You won your seat: ${r.label}.`);
       } catch (err) { out.textContent = err.message; btn.disabled = false; }
     };
@@ -1955,8 +2123,9 @@ async function refreshSeats() {
     try {
       const r = await gate("/signup", { x: $("#bookX").value.trim(), address: $("#bookAddr").value.trim(), hp: $("#bookHp").value });
       out.replaceChildren(el("div", { class: `seat ${r.phase}` }, el("span", { text: r.kind === "GTD" ? "Guaranteed" : "First come, first served" }), el("b", { text: r.label })),
-        r.already ? "Your name was already in my book." : "Your name is written in my book.");
+        r.already ? `Your name was already in my book: № ${String(r.num).padStart(4, "0")}.` : `Your name is written in my book: № ${String(r.num).padStart(4, "0")}.`);
       AU.seat(r.phase === "sanctum"); refreshSeats();
+      BOOK.show(out, { ...r, handle: $("#bookX").value.trim() });
     } catch (err) { out.textContent = err.message; }
     btn.disabled = false;
   };

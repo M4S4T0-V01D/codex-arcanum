@@ -181,6 +181,14 @@ npm run export        # D1 -> CSVs -> commit + push to the private repo (uses yo
 npx wrangler deploy   # after changing the worker or the card pool
 ```
 
+**Share cards.** Every entry gets a permanent number in the Book of Names
+(`num`, in order of inscription; `book_no` in `entries.csv`). After a signup
+or a verified Thoth win, the site draws a 1600×900 "page of the Book" in the
+browser: № number, @handle, seat, a plate, a wax seal. It offers a
+**Post on X** button: on phones the image attaches through the share sheet;
+on desktop it is copied (or saved) and X opens with the post text, ready to
+paste.
+
 For automatic exports every 10 minutes, give the worker a fine-grained GitHub
 token with *Contents: read & write* on the allowlist repo only:
 `npx wrangler secret put GITHUB_TOKEN`. Until then, `npm run export` does

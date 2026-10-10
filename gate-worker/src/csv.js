@@ -18,8 +18,8 @@ export function buildCsvs(rows) {
     // OpenSea allowlists take plain 0x addresses, one per row (no ENS names).
     out[ph.file] = "address\n" + rows.filter(r => r.phase === key).map(r => r.address).join("\n") + "\n";
   }
-  out["entries.csv"] = "address,x_handle,phase,phase_kind,source,wins,created_utc,updated_utc\n" + rows.map(r =>
-    [r.address, r.x ? "@" + r.x : "", PHASES[r.phase].label, PHASES[r.phase].kind, r.source, r.wins, iso(r.created), iso(r.updated)]
+  out["entries.csv"] = "book_no,address,x_handle,phase,phase_kind,source,wins,created_utc,updated_utc\n" + rows.map(r =>
+    [r.num, r.address, r.x ? "@" + r.x : "", PHASES[r.phase].label, PHASES[r.phase].kind, r.source, r.wins, iso(r.created), iso(r.updated)]
       .map(esc).join(",")).join("\n") + "\n";
   return out;
 }

@@ -159,15 +159,153 @@ def helix_runs(points, depths):
     return runs
 
 
-def serpent_run(p, pts, widths, lw=1.8):
+def _normals(pts):
+    out = []
+    for i in range(len(pts)):
+        x0, y0 = pts[max(0, i - 1)]
+        x1, y1 = pts[min(len(pts) - 1, i + 1)]
+        L = math.hypot(x1 - x0, y1 - y0) or 1.0
+        out.append(((x1 - x0) / L, (y1 - y0) / L, -(y1 - y0) / L, (x1 - x0) / L))  # tangent, normal
+    return out
+
+
+def serpent_run(p, pts, widths, lw=1.8, front=True, flow=0.0):
+    """One stretch of serpent body: shaded, scaled and glossy (front) or
+    dimmed (behind). `flow` scrolls the scales (in scale lengths)."""
     poly = thick(pts, widths)
     p.poly(poly, "fill")
-    p.poly(poly, "accent", 55, occlude=False)
-    p.poly(thick(pts, [w * 0.35 for w in widths]), "ink", 90, occlude=False)
-    p.line(poly, lw, closed=True)
+    p.poly(poly, "ink", 22 if front else 12, occlude=False)
+    if front and len(pts) > 2:
+        nm = _normals(pts)
+        p.poly(thick(pts, [w * 0.7 for w in widths]), "ink", 30, occlude=False)
+        back = [(x + n[2] * w * 0.12, y + n[3] * w * 0.12) for (x, y), n, w in zip(pts, nm, widths)]
+        p.poly(thick(back, [w * 0.38 for w in widths]), "ink", 48, occlude=False)
+        seg = [math.dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+        total, wmean = sum(seg), sum(widths) / len(widths)
+        step = max(1e-3, wmean * 0.3)
+        d, acc, i, k = (flow % 1.0) * step, 0.0, 0, 0
+        while d < total:
+            while i < len(seg) - 1 and acc + seg[i] < d:
+                acc += seg[i]; i += 1
+            f = (d - acc) / (seg[i] or 1)
+            x = lerp(pts[i][0], pts[i + 1][0], f); y = lerp(pts[i][1], pts[i + 1][1], f)
+            w = lerp(widths[i], widths[i + 1], f)
+            tx, ty, nx, ny = nm[i]
+            rs = w * 0.13
+            off = 0.11 if k % 2 else -0.11
+            for r in (-0.62, -0.2, 0.22, 0.64):  # fractions of the half-width
+                cx, cy = x + nx * w * 0.5 * (r + off), y + ny * w * 0.5 * (r + off)
+                arc = [(cx + nx * rs * math.sin(q) - tx * rs * 0.9 * math.cos(q), cy + ny * rs * math.sin(q) - ty * rs * 0.9 * math.cos(q))
+                       for q in (math.radians(a) for a in range(-90, 91, 30))]
+                p.line(arc, 0.6, "ink", 165)
+            d += step; k += 1
+        p.line([(x + n[2] * w * 0.3, y + n[3] * w * 0.3) for (x, y), n, w in zip(pts, nm, widths)][1:-1], 1.6, "flare", 80)
+    n = len(pts)
+    p.line(poly[:n], lw)
+    p.line(poly[n:], lw)
+    if front and n > 2:  # where the body turns away, round it like a bending tube
+        for end, prev in ((pts[0], pts[1]), (pts[-1], pts[-2])):
+            r = widths[0 if end is pts[0] else -1] / 2
+            if r < 0.01:
+                continue
+            ang = math.degrees(math.atan2(end[1] - prev[1], end[0] - prev[0]))
+            cap = p.circle_pts(end[0], end[1], r, ang - 90, ang + 90, 16)
+            p.poly(cap + [end], "fill")
+            p.poly(cap + [end], "ink", 22, occlude=False)
+            p.line(cap, lw)
 
 
-# ---------------------------------------------------------------------------
+def snake_head_top(p, x, y, ang, neck, t, lw=1.8):
+    """A viper's head seen from above: a spade wider than the neck, eyes on
+    both sides, crown shields, nostrils and a flicking forked tongue.
+    (x, y) is where the neck joins, `ang` the way it faces, `neck` the body
+    width there (unit coords); the head is scaled to suit it."""
+    s = neck / 0.1
+    a = math.radians(ang)
+    fx, fy = math.cos(a), math.sin(a)
+    L = lambda u, w: (x + (fx * u - fy * w) * s, y + (fy * u + fx * w) * s)  # noqa: E731
+    deg = math.degrees(a)
+    half = [(0.0, 0.05), (0.04, 0.066), (0.09, 0.098), (0.14, 0.108), (0.19, 0.1), (0.24, 0.082), (0.285, 0.058), (0.315, 0.032), (0.325, 0.0)]
+    outline = [L(u, w) for u, w in half] + [L(u, -w) for u, w in half[::-1][1:]]
+    flick = wave(t, 3)
+    if flick > 0.3:
+        tl = 0.04 + 0.11 * (flick - 0.3) / 0.7
+        tip = L(0.33 + tl, 0.006 * math.sin(TAU * t * 9))
+        p.line([L(0.32, 0.0), tip, L(0.33 + tl + 0.045, 0.02)], 1.1, "accent", 235)
+        p.line([tip, L(0.33 + tl + 0.045, -0.02)], 1.1, "accent", 235)
+    p.poly(outline, "fill")
+    p.poly(outline, "ink", 30, occlude=False)
+    p.poly([L(u, w * 0.55) for u, w in half] + [L(u, -w * 0.55) for u, w in half[::-1][1:]], "ink", 26, occlude=False)
+    # crown shields: frontal, supraoculars, parietals, internasals
+    p.poly([L(0.13, 0.026), L(0.21, 0.02), L(0.23, 0.0), L(0.21, -0.02), L(0.13, -0.026)], "ink", 70, occlude=False)
+    p.line([L(0.13, 0.026), L(0.21, 0.02), L(0.23, 0.0), L(0.21, -0.02), L(0.13, -0.026), L(0.13, 0.026)], 0.8, "ink", 220)
+    for sg in (1, -1):
+        sup = [L(0.14, 0.034 * sg), L(0.22, 0.03 * sg), L(0.235, 0.062 * sg), L(0.16, 0.078 * sg)]
+        p.poly(sup, "ink", 80, occlude=False)
+        p.line(sup + [sup[0]], 0.9, "ink", 230)
+        p.line([L(0.06, 0.004 * sg), L(0.13, 0.026 * sg), L(0.12, 0.07 * sg)], 0.8, "ink", 200)  # parietal
+        p.line([L(0.25, 0.004 * sg), L(0.285, 0.024 * sg)], 0.7, "ink", 190)  # internasal
+        p.dot(*L(0.3, 0.018 * sg), 1.0, "fill", 255)  # nostril
+        ex, ey = L(0.2, 0.084 * sg)
+        er = 0.017 * s
+        p.disc(ex, ey, er, "fill")
+        p.disc(ex, ey, er, "accent", 235, occlude=False)
+        p.glow(ex, ey, er * 3.2, int(180 + 60 * wave(t, 2)))
+        with p.tf(dx=ex, dy=ey, rot=deg):
+            p.poly([(er * 0.85 * math.cos(q), er * 0.18 * math.sin(q)) for q in (TAU * j / 16 for j in range(16))], "fill")
+        p.circle(ex, ey, er, 0.8, "ink", 230)
+    for row in range(3):  # small scales over the back of the head
+        for k in range(5):
+            w = (k - 2) * 0.026 + (0.013 if row % 2 else 0)
+            p.arc(*L(0.015 + row * 0.03, w), 0.011 * s, deg + 180 - 80, deg + 180 + 80, 0.55, "ink", 150)
+    p.line(outline, lw, closed=False)
+
+
+def snake_head(p, x, y, ang, size, t, lw=1.8):
+    """A viper's head in profile, mouth closed, tongue flicking. (x, y) is the
+    back of the head, `ang` the direction it faces (degrees)."""
+    a = math.radians(ang)
+    flip = -1 if math.cos(a) < 0 else 1
+    L = lambda u, w: (x + (math.cos(a) * u - math.sin(a) * w * flip) * size,  # noqa: E731
+                      y + (math.sin(a) * u + math.cos(a) * w * flip) * size)
+    rot = math.degrees(a) + (0 if flip > 0 else 180)
+    outline = ((-0.17, 0.05), (-0.09, 0.078), (0.0, 0.098), (0.08, 0.094), (0.15, 0.074), (0.21, 0.046), (0.25, 0.022), (0.27, 0.004),
+               (0.255, -0.014), (0.2, -0.03), (0.12, -0.05), (0.03, -0.074), (-0.06, -0.072), (-0.17, -0.05))
+    head = [L(u, w) for u, w in outline]
+    flick = wave(t, 3)
+    if flick > 0.35:  # forked tongue
+        tl = 0.05 + 0.09 * (flick - 0.35) / 0.65
+        tip = L(0.265 + tl, 0.004 * math.sin(TAU * t * 9))
+        p.line([L(0.265, 0.0), tip, L(0.265 + tl + 0.035, 0.016)], 1.0, "accent", 230)
+        p.line([tip, L(0.265 + tl + 0.035, -0.014)], 1.0, "accent", 230)
+    p.poly(head, "fill")
+    p.poly(head, "ink", 40, occlude=False)
+    p.poly([L(u, w) for u, w in outline[:7]] + [L(0.2, 0.026), L(0.0, 0.036), L(-0.17, 0.018)], "ink", 30, occlude=False)
+    p.line(head[1:-1], lw)
+    p.line([L(0.262, 0.004), L(0.17, -0.004), L(0.06, -0.014), L(-0.02, -0.032)], 0.9, "ink", 210)  # mouth
+    for k in range(6):
+        p.arc(*L(0.04 + 0.034 * k, 0.008), 0.014 * size, rot + 90 - 75 * flip, rot + 90 + 75 * flip, 0.6, "ink", 160)
+    for row, (w0, w1, u0, u1) in enumerate(((0.072, 0.098, -0.13, 0.05), (0.045, 0.07, -0.13, 0.0))):
+        for k in range(8):
+            u = lerp(u0, u1, (k + 0.5 * (row % 2)) / 8)
+            p.arc(*L(u, lerp(w0, w1, (u - u0) / (u1 - u0))), 0.01 * size, rot + 180 - 80, rot + 180 + 80, 0.55, "ink", 140)
+    shield = [L(0.08, 0.07), L(0.105, 0.09), L(0.15, 0.082), L(0.165, 0.064), L(0.12, 0.062)]
+    p.poly(shield, "fill")
+    p.poly(shield, "ink", 70, occlude=False)
+    p.line(shield, 1.0, closed=True)
+    stripe = [L(*q) for q in bezier((0.1, 0.04), (0.03, 0.034), (-0.06, 0.0), 12)]
+    p.poly(thick(stripe, [lerp(0.016, 0.004, i / 12) * size for i in range(13)]), "ink", 90, occlude=False)
+    ex, ey = L(0.126, 0.044)
+    er = 0.018 * size
+    p.disc(ex, ey, er, "fill")
+    p.disc(ex, ey, er, "accent", 235, occlude=False)
+    p.glow(ex, ey, er * 3.5, int(190 + 60 * wave(t, 2)))
+    with p.tf(dx=ex, dy=ey, rot=rot - 90):
+        p.poly([(er * 0.2 * math.sin(q), er * 0.9 * math.cos(q)) for q in (TAU * j / 16 for j in range(16))], "fill")
+    p.circle(ex, ey, er, 0.8, "ink", 230)
+    p.dot(*L(0.235, 0.022), 1.2, "fill", 255)
+
+
 @sigil("providence", "The Eye of Providence", "Freemasonry", 8,
        "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world",
        variants=[("Radiant Delta", 1), ("Unfinished Pyramid", 1)],
@@ -248,7 +386,7 @@ def ouroboros(p, t, v):
     ss = [i / n for i in range(n + 1)]
     centre = [frame(s)[0] for s in ss]
     body = thick(centre, [th(s) for s in ss])
-    p.glow(0, 0, 0.62, int(90 + 50 * wave(t, 1)), "light")
+    p.glow(0, 0, 0.6, int(45 + 25 * wave(t, 1)), "light")
     p.poly(body, "fill")
     p.poly(body, "ink", 34, occlude=False)  # gilt wash over the whole body
     # back (outer) is lit, belly (inner) in shadow: a band of brighter gilt
@@ -364,7 +502,7 @@ def squared_circle(p, t, v):
     p.line(tri, 2.4, closed=True)
     r3 = r2 / 2
     p.ring(0, 0, r3, 2.4)
-    p.glow(0, 0, r3 * 1.4, int(150 + 70 * wave(t, 2)))
+    p.glow(0, 0, r3 * 1.1, int(70 + 40 * wave(t, 2)))
     for k, (x, y) in enumerate(sq + tri):
         p.dot(x, y, 3.2, "accent")
         p.sparkle(x, y, 0.09, int(140 + 100 * wave(t, 1, k / 7)), rot=45)
@@ -472,7 +610,7 @@ def sri_yantra(p, t, v):
        rings=("Greek Alphabet", "Hieroglyphs", "Zodiac"))
 def flower_of_life(p, t, v):
     r = 0.3
-    k = 0.55 + 0.45 * math.cos(TAU * t)
+    k = 0.84 + 0.16 * math.cos(TAU * t)
     rings = 1 if v["variant"] == "Seed" else 2
     if rings == 1:
         r = 0.42
@@ -485,7 +623,7 @@ def flower_of_life(p, t, v):
                 centres.append((lerp(a0[0], a1[0], j / ring), lerp(a0[1], a1[1], j / ring)))
     rot = 60 * t
     outer = r * (rings + 1)
-    p.glow(0, 0, outer * 0.9, int(80 + 60 * (1 - k)), "light")
+    p.glow(0, 0, outer * 0.8, int(60 + 150 * (1 - k)), "light")
     p.circle(0, 0, outer, 2.6)
     p.circle(0, 0, outer + 0.04, 1.0, "ink", 170)
     with p.tf(rot=rot):
@@ -539,9 +677,9 @@ def platonic(p, t, v):
     p.circle(0, 0, 0.98, 1.4, "ink", 150)
     p.circle(0, 0, 0.98, 6.0, "faint", 120)
     ry, rx, rz = TAU * t, 0.45, 0.25 * math.sin(TAU * t)
-    p.glow(0, 0, 0.75, int(110 + 50 * wave(t, 2)), "light")
+    p.glow(0, 0, 0.7, int(80 + 40 * wave(t, 2)), "light")
     for i in range(12):
-        p.ray(0, 0, i * 30 + 15, 0.25, 0.95, 0.02, 0.1, int(90 + 60 * wave(t, 1, -i / 12)))
+        p.ray(0, 0, i * 30 + 15, 0.25, 0.95, 0.015, 0.05, int(60 + 50 * wave(t, 1, -i / 12)))
     if var == "Star Tetrahedron":
         a = [(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)]
         b = [(-x, -y, -z) for x, y, z in a]
@@ -581,28 +719,42 @@ def solomon(p, t, v):
        "The Wedjat, the eye Horus lost fighting Set and Thoth made whole again: health, restoration and the full measure",
        rings=("Hieroglyphs",))
 def horus(p, t, v):
+    def band(path, w0, w1):  # a gold band with an engraved groove down its middle
+        p.poly(thick(path, [lerp(w0, w1, i / (len(path) - 1)) for i in range(len(path))]), "ink")
+        p.line(path[2:-2], 1.0, "ink", 120)
+
     with p.tf(dy=0.08, s=1.0 + 0.02 * math.sin(TAU * t)):
         brow = bezier3((-0.8, 0.42), (-0.3, 0.66), (0.35, 0.66), (0.84, 0.44), 40)
-        p.poly(thick(brow, [lerp(0.11, 0.06, i / 40) for i in range(41)]), "ink")
+        band(brow, 0.11, 0.06)
         up = bezier3((-0.6, 0.05), (-0.3, 0.36), (0.25, 0.33), (0.58, 0.03), 40)
         lo = bezier3((-0.6, 0.05), (-0.25, -0.18), (0.25, -0.16), (0.58, 0.03), 40)
         p.poly(up + lo[::-1], "fill")
-        lx = 0.07 * math.sin(TAU * t)
-        p.disc(lx, 0.07, 0.165, "ink", occlude=False)
-        p.dot(lx + 0.05, 0.12, 2.4, "accent", 255)
+        lx = 0.06 * math.sin(TAU * t)
+        p.glow(lx, 0.07, 0.34, int(120 + 60 * wave(t, 2)))
+        with p.clip(up + lo[::-1]), p.tf(dx=lx, dy=0.07):
+            ir = 0.17
+            p.disc(0, 0, ir, "fill")
+            for k in range(40):
+                a = k * 9 + 5 * math.sin(TAU * t)
+                p.line([polar(ir * 0.42, a), polar(ir * (0.92 if k % 2 else 0.75), a)], 0.55, "ink", 150)
+            p.line([polar(ir * (0.6 + 0.05 * math.sin(math.radians(d) * 10)), d) for d in range(0, 360, 4)], 0.8, "accent", 190, closed=True)
+            p.circle(0, 0, ir, 2.4, "accent", 240)
+            p.disc(0, 0, ir * (0.36 + 0.05 * wave(t, 1)), "fill")
+            p.circle(0, 0, ir * (0.36 + 0.05 * wave(t, 1)), 0.9, "ink", 230)
+            p.dot(-ir * 0.32, ir * 0.36, 2.4, "accent", 255)
+            p.sparkle(-ir * 0.32, ir * 0.36, ir * 0.5, 190)
         p.line(up, 3.4)
         p.line(lo, 3.0)
-        liner = bezier((0.5, 0.05), (0.76, 0.1), (0.98, 0.04), 20)
-        p.poly(thick(liner, [lerp(0.06, 0.035, i / 20) for i in range(21)]), "ink")
+        p.line([(x, y - 0.035) for x, y in up[6:-6]], 0.7, "ink", 150)  # inner lid line
+        band(bezier((0.5, 0.05), (0.76, 0.1), (0.98, 0.04), 20), 0.06, 0.035)
         drop = bezier((-0.08, -0.14), (-0.1, -0.4), (-0.18, -0.7), 20)
-        p.poly(thick(drop, [lerp(0.07, 0.045, i / 20) for i in range(21)]), "ink")
+        band(drop, 0.07, 0.045)
         p.poly([(-0.25, -0.74), (-0.11, -0.74), (-0.18, -0.66)], "ink")
         lead = bezier3((0.12, -0.13), (0.14, -0.4), (0.27, -0.46), (0.40, -0.46), 20)
         C = (0.40, -0.62)
         spiral = [polar(lerp(0.16, 0.035, i / 50), 90 - 450 * i / 50, *C) for i in range(51)]
         path = lead + spiral[1:]
-        p.poly(thick(path, [lerp(0.055, 0.025, i / len(path)) for i in range(len(path))]), "ink")
-        p.glow(lx, 0.07, 0.3, int(130 + 60 * wave(t, 2)))
+        band(path, 0.055, 0.025)
         spark = path_point(drop + path[::-1], t)
         p.dot(*spark, 3.2, "accent", int(255 * wave(t, 2)))
         p.sparkle(*spark, 0.09, int(255 * wave(t, 2)), rot=90 * t)
@@ -646,30 +798,46 @@ def ankh(p, t, v):
        rings=("Planetary Metals", "Alchemical Elements", "Emerald Tablet"))
 def caduceus(p, t, v):
     flap = 6 * math.sin(TAU * t)
+
+    def feather(root, a, L, wmax, barbs=True):
+        path = bezier(root, polar(L * 0.55, a - 5, *root), polar(L, a, *root), 22)
+        ws = [wmax * math.sin(math.pi * min(1.0, 0.08 + 0.92 * (i / 22) ** 0.9)) ** 0.6 * (1 - 0.15 * i / 22) + 0.002 for i in range(23)]
+        f = thick(path, ws)
+        p.poly(f, "fill")
+        p.poly(f, "ink", 45, occlude=False)
+        p.line(f, 1.1, closed=True)
+        p.line(path[2:-2], 0.8, "ink", 210)  # rachis
+        if barbs:
+            for j in range(3, 20, 3):
+                (x0, y0), (x1, y1) = path[j], path[j + 1]
+                dl = math.hypot(x1 - x0, y1 - y0) or 1
+                tx, ty = (x1 - x0) / dl, (y1 - y0) / dl
+                for sgn in (1, -1):
+                    nx, ny = -ty * sgn, tx * sgn
+                    w = ws[j] * 0.45
+                    p.line([(x0, y0), (x0 + nx * w + tx * w * 0.9, y0 + ny * w + ty * w * 0.9)], 0.5, "ink", 140)
+
     for side in (1, -1):
-        with p.tf(dy=0.6, sx=side, rot=flap * side * 0):
-            feathers = [(155, 0.62), (145, 0.58), (133, 0.5), (122, 0.42), (112, 0.33)]
-            for k, (ang, L) in enumerate(feathers):
-                a = ang - flap * (1 - k * 0.15)
-                root = (-0.05, 0.0)
-                tip = polar(L, a, *root)
-                mid = polar(L * 0.55, a - 8, *root)
-                f = thick(bezier(root, mid, tip, 16), [lerp(0.09, 0.02, i / 16) for i in range(17)])
-                p.poly(f, "fill")
-                p.line(f, 1.6, closed=True)
+        with p.tf(dy=0.6, sx=side):
+            for k in range(7):  # primaries
+                feather((-0.04, 0.0), 158 - k * 10 - flap * (1 - k * 0.1), 0.78 - k * 0.06, 0.08)
+            for k in range(5):  # coverts, layered over the root
+                feather((-0.03, 0.01), 150 - k * 10 - flap * 0.5, 0.34 - k * 0.03, 0.075, barbs=False)
+            p.arc(-0.04, 0.0, 0.22, 100 - flap * 0.5, 155 - flap * 0.5, 1.2, "ink", 200)
+
     staff = [(-0.028, 0.6), (0.028, 0.6), (0.04, -0.96), (-0.04, -0.96)]
-    y_top, y_bot, turns = 0.4, -0.82, 2.25
+    y_top, y_bot, turns = 0.36, -0.82, 2.25
     k = TAU * turns / (y_top - y_bot)
     snakes = []
     for phase in (0.0, math.pi):
         pts, dep, wid = [], [], []
-        for i in range(161):
-            y = lerp(y_bot, y_top, i / 160)
+        for i in range(201):
+            y = lerp(y_bot, y_top, i / 200)
             th = math.pi / 2 + phase - (y_top - y) * k
             A = 0.07 + 0.2 * math.sin(math.pi * (0.15 + 0.75 * (y - y_bot) / (y_top - y_bot)))
             pts.append((A * math.sin(th), y))
             dep.append(math.cos(th))
-            wid.append(lerp(0.025, 0.075, (i / 160) ** 0.7))
+            wid.append(lerp(0.003, 0.085, (i / 200) ** 0.5) * (1 - 0.25 * max(0.0, i / 200 - 0.9) / 0.1))
         snakes.append((pts, dep, wid))
     runs = []
     for pts, dep, wid in snakes:
@@ -680,23 +848,19 @@ def caduceus(p, t, v):
             idx += n - 1
     for front, run, w in runs:
         if not front:
-            serpent_run(p, run, w)
+            serpent_run(p, run, w, front=False)
     p.poly(staff, "fill")
     p.poly(staff, "ink", occlude=False)
     p.line([(0, 0.55), (0, -0.9)], 1.0, "ink", 0)
     for front, run, w in runs:
         if front:
-            serpent_run(p, run, w)
+            serpent_run(p, run, w, flow=-3 * t)
     for pts, dep, wid in snakes:
         x, y = pts[-1]
         side = 1 if x > 0 else -1
-        hd = [(x - side * 0.04, y - 0.03), (x + side * 0.02, y + 0.06), (x - side * 0.1, y + 0.13),
-              (x - side * 0.17, y + 0.09), (x - side * 0.1, y + 0.03)]
-        p.poly(hd, "fill")
-        p.line(hd, 1.6, closed=True)
-        p.dot(x - side * 0.08, y + 0.09, 1.6, "accent")
+        snake_head_top(p, x, y, 90 + side * 30, wid[-1], t + (0.5 if side > 0 else 0))
         u = (t + (0.5 if side > 0 else 0)) % 1
-        p.dot(*path_point(pts, u), 3.0, "accent", int(255 * math.sin(math.pi * u)))
+        p.sparkle(*path_point(pts, u), 0.07, int(255 * math.sin(math.pi * u)))
     p.glow(0, 0.68, 0.3, 200, "light")
     p.ring(0, 0.68, 0.075, 2.0)
     p.disc(0, 0.68, 0.035 * (1 + 0.3 * wave(t, 2)), "accent", 255, occlude=False)
@@ -752,14 +916,14 @@ def rose_cross(p, t, v):
             p.line(shape, 1.4, closed=True)
             p.line([polar(r1 - (r1 - r0) * 0.1, a_ - half * 0.8 + half * 1.6 * k / 12) for k in range(13)], 1.6, "flare", 120)
 
-        for count, r0, r1, spin, tint in ((12, 0.12, 0.4, 30 * t, 95), (7, 0.07, 0.3, -360 / 7 * t, 120), (3, 0.03, 0.2, 120 * t, 150)):
+        for count, r0, r1, spin, tint in ((12, 0.12, 0.4, 30 * t, 34), (7, 0.07, 0.3, -360 / 7 * t, 48), (3, 0.03, 0.2, 120 * t, 64)):
             half = 360 / count * 0.62
             for i in range(count):
                 petal(r0, r1, 90 + spin + 360 * i / count + (180 / count if count == 7 else 0), half, tint)
         # a spiralling, tightly furled bud at the heart
         bud = [polar(0.11 * (k / 80) ** 0.9, 90 + 720 * (k / 80) + 120 * t) for k in range(81)]
         p.disc(0, 0, 0.11, "fill")
-        p.disc(0, 0, 0.11, "accent", 170, occlude=False)
+        p.disc(0, 0, 0.11, "accent", 80, occlude=False)
         p.line(bud, 1.6)
         p.line([polar(0.11 * (k / 80) ** 0.9 + 0.006, 90 + 720 * (k / 80) + 120 * t) for k in range(10, 81)], 1.2, "flare", 150)
         p.circle(0, 0, 0.11, 1.2)
@@ -839,7 +1003,7 @@ def pentalpha(p, t, v):
     for n in range(-1, 7):
         u = n - t
         r = 0.95 * phi2 ** (-u)
-        fade = smooth(0.02, 0.09, r) * (1 - smooth(1.0, 2.1, r))
+        fade = smooth(0.02, 0.09, r) * (1 - smooth(0.8, 1.0, r))
         if fade <= 0.01:
             continue
         pts = ngon(5, r, 90 + 36 * u)
@@ -867,12 +1031,6 @@ def athanor(p, t, v):
     for i in range(3):
         y = -0.72 - 0.08 * i
         p.line([(-0.36 + 0.03 * i, y), (0.36 - 0.03 * i, y)], 1.0, "ink", 160)
-    for i in range(7):
-        x = -0.3 + 0.1 * i
-        h = 0.18 + 0.08 * math.sin(TAU * (2 * t + i * 0.37)) + 0.04 * math.sin(TAU * (3 * t + i * 0.71))
-        fl = bezier((x - 0.05, -0.62), (x - 0.02, -0.62 + h * 0.6), (x + 0.02 * math.sin(TAU * (t + i * 0.2)), -0.62 + h), 10)
-        fl += bezier(fl[-1], (x + 0.03, -0.62 + h * 0.5), (x + 0.05, -0.62), 10)[1:]
-        p.poly(fl, "accent", 200, occlude=False)
     p.glow(0, -0.56, 0.42, int(170 + 60 * wave(t, 3)))
     cy, rx, ry = -0.05, 0.4, 0.5
     egg = [(rx * math.sin(s) * (1 - 0.14 * math.cos(s)), cy + ry * math.cos(s))
@@ -896,6 +1054,18 @@ def athanor(p, t, v):
         by = lerp(-0.5, lvl - 0.02, u)
         p.circle(bx, by, 0.018 + 0.012 * (i % 3), 1.0, "ink", int(220 * math.sin(math.pi * u)))
     p.line(egg, 2.6, closed=True)
+    for i in range(7):
+        x = -0.3 + 0.1 * i
+        for layer, sc, vv in (("accent", 1.0, 170), ("flare", 0.55, 230)):
+            h = (0.22 + 0.08 * math.sin(TAU * (2 * t + i * 0.37)) + 0.04 * math.sin(TAU * (3 * t + i * 0.71))) * sc * (1.15 if i in (2, 3, 4) else 0.85)
+            sway = 0.035 * math.sin(TAU * (t + i * 0.2)) * sc
+            w = 0.055 * sc
+            tip = (x + sway * 1.4 + 0.02 * sc, -0.62 + h)
+            left = bezier3((x - w, -0.62), (x - w * 1.2, -0.62 + h * 0.35), (x + sway - w * 0.4, -0.62 + h * 0.7), tip, 14)
+            right = bezier3(tip, (x + sway + w * 0.7, -0.62 + h * 0.6), (x + w * 1.1, -0.62 + h * 0.3), (x + w, -0.62), 14)
+            p.poly(left + right[1:], layer, vv, occlude=False)
+        u = (t * 2 + i * 0.37) % 1
+        p.sparkle(x + 0.04 * math.sin(TAU * (u + i)), -0.6 + 0.35 * u, 0.025, int(220 * math.sin(math.pi * u)))
     p.line(neck, 2.2)
     p.ring(0, 0.88, 0.05, 2.0)
     bob = 0.03 * math.sin(TAU * t)
@@ -940,27 +1110,37 @@ def triskele(p, t, v):
     p.circle(0, 0, 0.98, 2.2)
     for i in range(48):
         p.dot(*polar(0.92, 7.5 * i - 15 * t), 1.5, "ink", 200)
+    p.glow(0, 0, 0.6, 90, "light")
     with p.tf(rot=-120 * t):
-        turns, rmax = 2.0, 0.27
+        R, rmax, turns = 0.47, 0.31, 1.75
+        arms = []
         for i in range(3):
-            c = polar(0.36, 90 + 120 * i)
-            a0 = 90 + 120 * i + 150
-            sp = [polar(rmax * (k / 120), a0 + 360 * turns * (k / 120 - 1), *c) for k in range(121)]
-            nxt_c = polar(0.36, 90 + 120 * (i + 1))
-            nxt_a0 = 90 + 120 * (i + 1) + 150
-            end = sp[-1]
-            nxt_end = polar(rmax, nxt_a0, *nxt_c)
-            tan = math.radians(a0 + 90)
-            ntan = math.radians(nxt_a0 + 90)
-            link = bezier3(end, (end[0] + 0.45 * math.cos(tan), end[1] + 0.45 * math.sin(tan)),
-                           (nxt_end[0] + 0.45 * math.cos(ntan), nxt_end[1] + 0.45 * math.sin(ntan)), nxt_end, 40)
-            p.line(sp, 12.0, "flare", 70)
-            p.line(sp, 4.2, "ink", 255)
-            p.line(link, 4.2, "ink", 255)
-            p.line(sp, 1.2, "fill", 255)
+            base = 90 + 120 * i
+            c = polar(R, base)
+            to_centre = base + 180
+            end_ang = to_centre - 100  # where the spiral's outer end sits on its own circle
+            sp = [polar(rmax * (k / 140) ** 0.95, end_ang + 360 * turns * (k / 140 - 1), *c) for k in range(141)]
+            e = sp[-1]
+            tang = math.radians(end_ang + 90)
+            # sweep from the spiral's outer end into the common centre
+            link = bezier3(e, (e[0] + 0.3 * math.cos(tang), e[1] + 0.3 * math.sin(tang)),
+                           polar(0.16, to_centre + 180 - 35), (0.0, 0.0), 30)
+            arms.append(sp + link[1:])
+        for arm in arms:
+            n = len(arm)
+            w = [0.022 + 0.05 * min(1.0, (i / n) * 3.5) ** 0.7 * (1 - 0.55 * max(0.0, i / n - 0.8) / 0.2) for i in range(n)]
+            band = thick(arm, w)
+            p.line(arm, 14.0, "flare", 60)
+            p.poly(band, "fill")
+            p.poly(band, "ink", 210, occlude=False)
+            p.line(arm[3:-3], 1.0, "ink", 90)  # engraved groove
+            p.line(band, 1.2, "ink", 255, closed=True)
         for i in range(3):
-            p.disc(*polar(0.36, 90 + 120 * i), 0.03 * (1 + 0.4 * wave(t, 1, i / 3)), "accent", 255, occlude=False)
-            p.glow(*polar(0.36, 90 + 120 * i), 0.16, int(150 + 90 * wave(t, 1, i / 3)))
+            c = polar(R, 90 + 120 * i)
+            p.disc(*c, 0.028 * (1 + 0.4 * wave(t, 1, i / 3)), "accent", 255, occlude=False)
+            p.glow(*c, 0.16, int(150 + 90 * wave(t, 1, i / 3)))
+        p.disc(0, 0, 0.035, "accent", 230, occlude=False)
+        p.glow(0, 0, 0.2, int(140 + 80 * wave(t, 2)))
 
 
 @sigil("enneagram", "The Enneagram", "Fourth Way", 4,
@@ -1264,23 +1444,23 @@ def orphic_egg(p, t, v):
     cy, rx, ry = -0.06, 0.5, 0.74
     half = lambda y: rx * math.sqrt(max(0.0, 1 - ((y - cy) / ry) ** 2)) * (1 - 0.12 * (y - cy) / ry)  # noqa: E731
     egg = [(rx * math.sin(s) * (1 - 0.12 * math.cos(s)), cy + ry * math.cos(s)) for s in (TAU * i / 180 for i in range(180))]
-    y_bot, y_top, turns = -0.62, 0.56, 2.5
+    y_bot, y_top, turns = -0.66, 0.6, 2.25
     pts, dep, wid = [], [], []
     for i in range(241):
         u = i / 240
         y = lerp(y_bot, y_top, u)
         th = TAU * (turns * u + t)
-        hw = half(y) + 0.045
-        pts.append((hw * math.sin(th), y + 0.05 * math.cos(th)))
+        hw = half(y) + 0.07
+        pts.append((hw * math.sin(th), y + 0.11 * math.cos(th)))
         dep.append(math.cos(th))
-        wid.append(lerp(0.03, 0.12, min(1.0, u * 1.6)) * (1 - 0.3 * max(0, u - 0.85) / 0.15))
+        wid.append(lerp(0.004, 0.17, min(1.0, u * 1.5) ** 0.8) * (1 - 0.25 * max(0, u - 0.88) / 0.12))
     runs, idx = [], 0
     for front, run in helix_runs(pts, dep):
         runs.append((front, run, wid[idx:idx + len(run)]))
         idx += len(run) - 1
     for front, run, w in runs:
         if not front:
-            serpent_run(p, run, w)
+            serpent_run(p, run, w, front=False)
     p.poly(egg, "fill")
     for k in range(1, 6):
         y = cy - ry + 2 * ry * k / 6
@@ -1291,16 +1471,8 @@ def orphic_egg(p, t, v):
     p.glow(0, cy, 0.3, int(120 + 70 * wave(t, 2)))
     for front, run, w in runs:
         if front:
-            serpent_run(p, run, w)
+            serpent_run(p, run, w, lw=2.0)
     x, y = pts[-1]
-    hx = x * 0.6
-    head = [(hx - 0.06, y), (hx - 0.05, y + 0.08), (hx, y + 0.15), (hx + 0.05, y + 0.08), (hx + 0.06, y)]
-    neck = thick([(x, y), (hx, y + 0.02)], 0.07)
-    p.poly(neck, "fill")
-    p.poly(head, "fill")
-    p.line(head, 1.8, closed=True)
-    p.dot(hx - 0.025, y + 0.08, 1.4, "accent")
-    p.dot(hx + 0.025, y + 0.08, 1.4, "accent")
-    fl = 0.03 * wave(t, 4)
-    p.line([(hx, y + 0.15), (hx, y + 0.2 + fl), (hx - 0.02, y + 0.23 + fl)], 1.1, "accent", 220)
-    p.line([(hx, y + 0.2 + fl), (hx + 0.02, y + 0.23 + fl)], 1.1, "accent", 220)
+    x0, y0 = pts[-6]
+    heading = math.degrees(math.atan2(y - y0, x - x0))
+    snake_head_top(p, x, y, lerp(heading, 90, 0.6), wid[-1], t)

@@ -1,44 +1,28 @@
 {
-  "name": "Plate VII: The Eye of Providence",
-  "description": "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. Degree of Initiate, rank 361 of the folio. “ORDO AB CHAO”: Order out of chaos.",
+  "name": "Plate VII: The Eye of Ra",
+  "description": "The burning Eye of Ra: the sun-disc winged by Horus of Behdet and girded by twin uraei, its rays falling as hands that offer life, above a wall of the sacred writing. Struck in Solar Lapis: lapis and beaten gold, the colours of the sun-god's temple. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
   "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/7.jpg",
   "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/7.mp4",
   "attributes": [
     {
       "trait_type": "Degree",
-      "value": "Initiate"
+      "value": "Hierophant"
     },
     {
       "trait_type": "Mystery",
-      "value": "The Eye of Providence"
+      "value": "The Eye of Ra"
     },
     {
       "trait_type": "Tradition",
-      "value": "Freemasonry"
+      "value": "Egyptian Mysteries"
     },
     {
       "trait_type": "Form",
-      "value": "Radiant Delta"
+      "value": "One of One"
     },
     {
       "trait_type": "Opus",
-      "value": "Rubedo"
-    },
-    {
-      "trait_type": "Halo",
-      "value": "Emanation"
-    },
-    {
-      "trait_type": "Glyph Ring",
-      "value": "Zodiac"
-    },
-    {
-      "trait_type": "Frame",
-      "value": "Bare"
-    },
-    {
-      "trait_type": "Motto",
-      "value": "ORDO AB CHAO"
+      "value": "Solar Lapis"
     }
   ]
 }

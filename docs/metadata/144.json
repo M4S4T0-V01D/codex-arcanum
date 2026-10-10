@@ -1,0 +1,28 @@
+{
+  "name": "Plate CXLIV: The Ophanim",
+  "description": "The wheels within wheels that Ezekiel saw beside the living creatures by the river Chebar: their rims were high and dreadful, and full of eyes round about. Struck in Seraph Fire: the white fire of the seraphim. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/144.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/144.mp4",
+  "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Hierophant"
+    },
+    {
+      "trait_type": "Mystery",
+      "value": "The Ophanim"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Merkabah Mysticism"
+    },
+    {
+      "trait_type": "Form",
+      "value": "One of One"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Seraph Fire"
+    }
+  ]
+}

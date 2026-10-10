@@ -1,0 +1,28 @@
+{
+  "name": "Plate DCCLXXVII: The Sun Stone",
+  "description": "The great stone of the Fifth Sun, Nahui Ollin: the four past worlds at its heart, the twenty day-signs in their ring, and two fire serpents carrying the sun across the sky. Struck in Obsidian Sun: obsidian, turquoise and gold, the stones of the Fifth Sun. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/777.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/777.mp4",
+  "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Hierophant"
+    },
+    {
+      "trait_type": "Mystery",
+      "value": "The Sun Stone"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Mesoamerican Mysteries"
+    },
+    {
+      "trait_type": "Form",
+      "value": "One of One"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Obsidian Sun"
+    }
+  ]
+}

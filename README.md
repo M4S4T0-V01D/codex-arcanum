@@ -85,11 +85,28 @@ Requires Python 3 + Pillow + numpy + fontTools, `gifsicle`, and the Noto
 fonts in `/usr/share/fonts/noto/` (Symbols, Symbols 2, Runic, Ogham, Egyptian
 Hieroglyphs, Hebrew, Devanagari, Serif, Serif Display, Math).
 
+## The Seven Hierophants (1/1s)
+
+Seven hand-composed one-of-ones (`arcana/hierophants.py`) at fixed token ids.
+Each uses a symbol found nowhere else in the collection, its own palette,
+and an ornate Hierophant frame. They are the top Degree, so the other 770
+plates are ranked into Magus 40 · Adept 110 · Initiate 220 · Neophyte 400.
+
+| Token | Plate | Tradition | Palette |
+|---|---|---|---|
+| VII | The Eye of Ra: winged sun disc, uraei, the Aten's ankh-rays, a hieroglyph wall | Egyptian | Solar Lapis |
+| XLII | The Emerald Tablet: the full Latin text, lit line by line | Hermeticism | Smaragdine |
+| CVIII | AUM on a lotus throne, a 108-bead mala, the Gayatri | Vedic | Saffron Night |
+| CXLIV | The Ophanim: gyroscopic wheels full of blinking eyes, seraph wings | Merkabah | Seraph Fire |
+| CCCXXXIII | Yggdrasil: nine worlds, Jörmungandr, aurora | Norse | World Ash |
+| CDXXXII | The Phoenix rising from a burning nest | Alchemy / Egypt | Phoenix Flame |
+| DCCLXXVII | The Sun Stone: day signs, solar rays, twin fire serpents | Mesoamerican | Obsidian Sun |
+
 ## Traits
 
 | Trait | Values |
 |---|---|
-| **Degree** | Hierophant (7), Magus (40), Adept (110), Initiate (220), Neophyte (400). Exact counts: every token is ranked by trait rarity (each trait's surprisal normalised so no category dominates) and the ranking is sliced. Each plate carries an engraved degree seal; the Hierophant's burns |
+| **Degree** | Hierophant (7: the 1/1s), Magus (40), Adept (110), Initiate (220), Neophyte (400). Exact counts: every other token is ranked by trait rarity (each trait's surprisal normalised so no category dominates) and the ranking is sliced. Each plate carries an engraved degree seal; the Hierophant's burns |
 | **Mystery** (28 figures) | Eye of Providence, Ouroboros, Squaring of the Circle, Hieroglyphic Monad, Tree of Life, Sri Yantra, Flower of Life, Metatron's Cube, Platonic Solid, Seal of Solomon, Eye of Horus, Ankh beneath the Aten, Caduceus, Rose Cross, Taijitu & Trigrams, Wheel of the Dharma, Pentalpha, Philosophical Egg, Tetractys, Triple Spiral, Enneagram, Chymical Wedding (Sol & Luna), Serpent Power, Astrolabe, Valknut, Pyramids of Giza, Eleusinian Ear of Grain, Orphic Egg |
 | **Tradition** | Follows from the figure (Freemasonry, Kabbalah, Tantra, Taoism, Norse, Eleusinian, Orphic, Pythagorean, …) |
 | **Form** | Variants for some figures: Radiant Delta / Unfinished Pyramid, Flower / Seed, and the five Platonic solids plus the Star Tetrahedron |

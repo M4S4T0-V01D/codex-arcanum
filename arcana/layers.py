@@ -39,7 +39,7 @@ def halo_lattice(p, t):
 
 def halo_nimbus(p, t):
     b = 0.6 + 0.4 * wave(t, 1)
-    p.glow(0, 0, 1.45, int(150 * b), "light", steps=16)
+    p.glow(0, 0, 1.35, int(70 * b), "light", steps=16)
 
 
 def halo_spheres(p, t):

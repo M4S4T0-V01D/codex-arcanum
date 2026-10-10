@@ -59,4 +59,40 @@ PALETTES = {
         accent=(255, 255, 255), glow="iridescent", glow_k=0.6, fill=(6, 8, 14),
         faint=(150, 170, 220), stars=(220, 230, 255), nebula=(80, 60, 160),
         lore="the peacock's tail, the iridescence that heralds the Stone"),
+    # ---- the Seven Hierophants' own palettes (weight 0: never rolled) ----
+    "Solar Lapis": dict(
+        weight=0, one=True, kind="dark", bg=((26, 44, 116), (4, 7, 28)), ink=((255, 238, 176), (196, 134, 50)),
+        accent=(110, 232, 232), glow=(255, 200, 110), glow_k=0.6, fill=(10, 18, 58),
+        faint=(230, 190, 110), stars=(255, 222, 150), nebula=(70, 90, 200),
+        lore="lapis and beaten gold, the colours of the sun-god's temple"),
+    "Smaragdine": dict(
+        weight=0, one=True, kind="dark", bg=((10, 74, 50), (2, 13, 9)), ink=GOLD,
+        accent=(100, 255, 178), glow=(130, 255, 180), glow_k=0.55, fill=(4, 38, 26),
+        faint=(150, 230, 170), stars=(200, 255, 220), nebula=(30, 160, 100),
+        lore="a single emerald, lit from within"),
+    "Saffron Night": dict(
+        weight=0, one=True, kind="dark", bg=((64, 22, 86), (10, 4, 20)), ink=((255, 232, 150), (224, 140, 40)),
+        accent=(255, 128, 176), glow=(255, 172, 80), glow_k=0.6, fill=(30, 10, 42),
+        faint=(255, 190, 120), stars=(255, 222, 200), nebula=(180, 60, 140),
+        lore="saffron and the violet of the night before the first sound"),
+    "Seraph Fire": dict(
+        weight=0, one=True, kind="dark", bg=((54, 18, 8), (6, 2, 2)), ink=((255, 248, 222), (224, 162, 80)),
+        accent=(255, 112, 40), glow=(255, 124, 40), glow_k=0.65, fill=(20, 6, 4),
+        faint=(255, 150, 90), stars=(255, 200, 160), nebula=(200, 60, 20),
+        lore="the white fire of the seraphim"),
+    "World Ash": dict(
+        weight=0, one=True, kind="dark", bg=((12, 52, 62), (2, 8, 14)), ink=((236, 242, 232), (150, 172, 160)),
+        accent=(120, 255, 212), glow=(140, 255, 222), glow_k=0.55, fill=(4, 22, 28),
+        faint=(150, 222, 210), stars=(220, 255, 250), nebula=(40, 140, 160),
+        lore="ash-silver under the northern lights"),
+    "Phoenix Flame": dict(
+        weight=0, one=True, kind="dark", bg=((104, 16, 10), (14, 2, 2)), ink=((255, 238, 172), (216, 120, 40)),
+        accent=(255, 250, 222), glow=(255, 112, 30), glow_k=0.65, fill=(40, 6, 4),
+        faint=(255, 160, 90), stars=(255, 210, 170), nebula=(220, 60, 20),
+        lore="the fire the Bennu kindles from its own wings"),
+    "Obsidian Sun": dict(
+        weight=0, one=True, kind="dark", bg=((42, 30, 24), (4, 3, 3)), ink=GOLD,
+        accent=(64, 224, 208), glow=(255, 172, 70), glow_k=0.55, fill=(12, 9, 7),
+        faint=(220, 170, 100), stars=(255, 230, 190), nebula=(150, 80, 30),
+        lore="obsidian, turquoise and gold, the stones of the Fifth Sun"),
 }

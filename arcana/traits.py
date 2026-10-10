@@ -7,6 +7,7 @@ import random
 
 from .layers import FRAMES, HALOS, MOTTOS, RINGS
 from .palettes import PALETTES
+from .hierophants import ONE_OF_ONE
 from .sigils import SIGILS
 
 AFFINITY = 4.0  # weight multiplier for rings that belong to the figure's tradition
@@ -29,9 +30,9 @@ def pick(rng, table):
 
 def roll(token_id, seed, salt=0):
     rng = random.Random(f"{seed}:{token_id}:{salt}")
-    sig = SIGILS[pick(rng, {k: s["weight"] for k, s in SIGILS.items()})]
+    sig = SIGILS[pick(rng, {k: s["weight"] for k, s in SIGILS.items() if s["weight"] > 0})]
     variant = pick(rng, dict(sig["variants"])) if sig["variants"] else None
-    opus = pick(rng, {k: p["weight"] for k, p in PALETTES.items()})
+    opus = pick(rng, {k: p["weight"] for k, p in PALETTES.items() if p["weight"] > 0})
     halo = pick(rng, {k: w for k, (w, _) in HALOS.items()})
     ring_w = {k: r["weight"] * (AFFINITY if k in sig["rings"] else 1.0) for k, r in RINGS.items()}
     ring = pick(rng, ring_w)
@@ -50,7 +51,10 @@ def roll(token_id, seed, salt=0):
 
 
 # Initiatory degrees, highest first: (name, number of plates at supply 777).
+# The seven Hierophants are the hand-composed one-of-ones (hierophants.py);
+# the other 770 plates are ranked into the remaining degrees.
 DEGREES = [("Hierophant", 7), ("Magus", 40), ("Adept", 110), ("Initiate", 220), ("Neophyte", 400)]
+RANKED_DEGREES = DEGREES[1:]
 SCORED = ["Figure", "Opus", "Halo", "Glyph Ring", "Frame", "Motto"]
 
 
@@ -66,6 +70,13 @@ def assign_degrees(toks):
     counts per degree, scaled to the supply. Each trait contributes its
     surprisal (-log frequency) divided by that trait's average surprisal,
     so every trait category weighs the same."""
+    for tid, tok in toks.items():
+        if tok.get("one"):
+            tok["traits"]["Degree"] = "Hierophant"
+            tok["degree_level"] = 5
+            tok["rank"] = 0
+            tok["rarity"] = None
+    toks = {tid: tok for tid, tok in toks.items() if not tok.get("one")}
     n = len(toks)
     vals = {tid: _scored(t) for tid, t in toks.items()}
     freq = {k: {} for k in SCORED}
@@ -76,9 +87,9 @@ def assign_degrees(toks):
     mean = {k: sum(sur[k][v[k]] for v in vals.values()) / n for k in SCORED}
     score = {tid: sum(sur[k][x] / mean[k] for k, x in v.items()) for tid, v in vals.items()}
     ranked = sorted(toks, key=lambda i: (-score[i], i))
-    total = sum(c for _, c in DEGREES)
+    total = sum(c for _, c in RANKED_DEGREES)
     cuts, acc = [], 0
-    for name, c in DEGREES:
+    for name, c in RANKED_DEGREES:
         acc += c
         cuts.append((name, round(acc * n / total)))
     for pos, tid in enumerate(ranked):
@@ -89,9 +100,19 @@ def assign_degrees(toks):
         toks[tid]["rank"] = pos + 1
 
 
+def one_of_one(tid, seed):
+    sig = SIGILS[ONE_OF_ONE[tid]]
+    return dict(id=tid, sigil=sig["key"], variant=None, one=True, roman=roman(tid),
+                traits={"Mystery": sig["name"], "Tradition": sig["tradition"], "Form": "One of One", "Opus": sig["palette"]},
+                seed=int(hashlib.sha256(f"{seed}:{tid}:one".encode()).hexdigest()[:12], 16))
+
+
 def roll_collection(supply, seed):
     seen, out = set(), {}
     for tid in range(1, supply + 1):
+        if tid in ONE_OF_ONE:
+            out[tid] = one_of_one(tid, seed)
+            continue
         salt = 0
         while True:
             tok = roll(tid, seed, salt)
@@ -110,9 +131,11 @@ def describe(tok):
     tr = tok["traits"]
     pal = PALETTES[tr["Opus"]]
     lines = [f"{sig['lore']}.", f"Struck in {tr['Opus']}: {pal['lore']}."]
-    if "Degree" in tr:
+    if tok.get("one"):
+        lines.append("One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.")
+    elif "Degree" in tr:
         lines.append(f"Degree of {tr['Degree']}, rank {tok['rank']} of the folio.")
-    if tr["Motto"] != "None":
+    if tr.get("Motto", "None") != "None":
         lines.append(f"“{tr['Motto']}”: {MOTTOS[tr['Motto']][1]}.")
     return " ".join(lines)
 

@@ -533,6 +533,25 @@ footer .whisper{font-style:italic;color:#5e5444}
 .book p.small{font-size:14px;color:var(--faint);margin:12px 0 0}
 @media (max-width:620px){.phases{grid-template-columns:1fr}}
 
+
+/* ---------- the Seven Hierophants ---------- */
+#hierophants{overflow-x:clip}
+.hiero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,4vw,60px);align-items:center}
+.hiero-stage{position:relative;aspect-ratio:1;padding:10px;background:#0b0807;border:1px solid var(--gold2);
+  box-shadow:0 0 0 6px rgba(7,5,4,.9),0 0 0 7px var(--gold3),0 40px 100px rgba(0,0,0,.7),0 0 120px rgba(255,200,110,.18)}
+.hiero-stage video{width:100%;height:100%}
+.hiero-stage::before{content:"";position:absolute;inset:-40px;z-index:-1;background:conic-gradient(from var(--ang,0deg),transparent,rgba(255,210,120,.25),transparent 30%,rgba(127,246,255,.18),transparent 60%);filter:blur(30px);animation:angle 14s linear infinite}
+.hiero-info .num{font:700 clamp(46px,6vw,80px)/1 var(--deco);color:var(--gold3)}
+.hiero-info h3{font:700 clamp(28px,3.4vw,44px)/1.08 var(--deco);margin:8px 0 10px;background:linear-gradient(90deg,#fff1c4,#e8c977,#fff1c4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hiero-info .trad{font:500 11px/1.4 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--sph)}
+.hiero-info p{margin:16px 0 20px;font-size:clamp(18px,1.6vw,21px);color:#ddd0b2}
+.hiero-picks{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:22px}
+.hiero-picks button{padding:0;border:1px solid var(--line2);background:#000 center/cover;aspect-ratio:1;cursor:pointer;opacity:.55;transition:.3s;position:relative}
+.hiero-picks button:hover{opacity:.9}
+.hiero-picks button.on{opacity:1;border-color:var(--gold);box-shadow:0 0 18px rgba(232,180,90,.5)}
+.hiero-picks span{position:absolute;bottom:2px;left:0;right:0;font:500 9px/1 var(--mono);color:var(--gold);text-shadow:0 0 4px #000}
+@media (max-width:900px){.hiero{grid-template-columns:minmax(0,1fr)}.hiero-picks{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--line2);background:#0b0807;color:var(--text);padding:0;max-width:min(1000px,calc(100vw - 24px));width:100%;max-height:calc(100vh - 24px);
   box-shadow:0 0 0 1px #000,0 40px 120px rgba(0,0,0,.8),0 0 120px rgba(232,180,90,.12)}
@@ -801,6 +820,29 @@ html.pavonis .emblem,html.pavonis .brand,html.pavonis .btn.solid,html.pavonis .o
   </div>
 </section>
 
+
+<!-- THE SEVEN HIEROPHANTS -->
+<section class="gate" id="hierophants" data-sphere="3">
+  <div class="wrap">
+    <div class="gate-head"><div class="emblem" data-glyph="ogdoad"></div><div>
+      <div class="kicker">Seven of seven hundred and seventy-seven · One of one</div>
+      <h2 data-inscribe>The Seven Hierophants</h2>
+      <p class="voice reveal d1">Seven plates in my folio I composed by my own hand, and each has no twin. Their signs appear nowhere else in the folio: the Eye of Ra, my own Emerald Tablet, the first syllable, the wheels full of eyes, the World Tree, the bird that rises from its ashes, and the Stone of the Fifth Sun. They are the Hierophants, the highest degree. Look on them.</p>
+    </div></div>
+    <div class="hiero reveal">
+      <div class="hiero-stage"><video id="hVid" muted loop playsinline autoplay></video></div>
+      <div class="hiero-info" aria-live="polite">
+        <div class="num" id="hNum"></div>
+        <h3 id="hName"></h3>
+        <div class="trad" id="hTrad"></div>
+        <p id="hLore"></p>
+        <button class="btn solid" type="button" id="hOpen">View the plate</button>
+        <div class="hiero-picks" id="hPicks" role="tablist" aria-label="The Seven Hierophants"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- V · MARS -->
 <section class="gate" id="gate-5" data-sphere="4">
   <div class="wrap">
@@ -850,7 +892,7 @@ html.pavonis .emblem,html.pavonis .brand,html.pavonis .btn.solid,html.pavonis .o
         <dl class="spec-list engr">
           <div><dt>Supply</dt><dd>777 unique plates</dd></div>
           <div><dt>Format</dt><dd>1080 × 1080 H.264 master (animation_url), 105 frames at 25 fps: a 4.2 s seamless loop. Also a 720 px palette-optimised GIF (image) and a full-size PNG poster</dd></div>
-          <div><dt>Degrees</dt><dd>Hierophant 7 · Magus 40 · Adept 110 · Initiate 220 · Neophyte 400, ranked by trait rarity</dd></div>
+          <div><dt>Degrees</dt><dd>Hierophant 7 (the hand-composed one-of-ones) · Magus 40 · Adept 110 · Initiate 220 · Neophyte 400, the last four ranked by trait rarity</dd></div>
           <div><dt>Metadata</dt><dd>OpenSea JSON per token (image, animation_url, attributes) plus an OpenSea Studio drop CSV</dd></div>
           <div><dt>Traits</dt><dd>Degree · Mystery · Tradition · Form · Opus · Halo · Glyph Ring · Frame · Motto</dd></div>
           <div><dt>Mint</dt><dd>On OpenSea, on Robinhood Chain. The date is to be revealed at the Eighth Gate</dd></div>
@@ -1451,12 +1493,13 @@ const HX = (() => {
     } catch { say("The folio would not open. Ask me again in a moment."); }
   };
   const CMD = {
-    help: () => say("Speak these words: who · gates · gate <1–8> · plate <1–777> · oracle · play · laws · inscribe · seats · tabula · mint · seal · sound · clear. There are other words, and the wise will find them."),
+    help: () => say("Speak these words: who · gates · gate <1–8> · plate <1–777> · hierophants · oracle · play · laws · inscribe · seats · tabula · mint · seal · sound · clear. There are other words, and the wise will find them."),
     who: () => say("I am Hermes Trismegistus, Thoth of the Egyptians, thrice great: greatest philosopher, greatest priest, greatest king. I wrote the Emerald Tablet and the books of the Corpus. This temple is my latest writing."),
     gates: () => say(SPH.map((s, i) => `${ROMAN(i + 1)} ${s.name}`).join(" · ") + ". Say gate and a number, and I will carry you there."),
     gate: (a) => { const n = parseInt(a, 10); if (n >= 1 && n <= 8) { say(`To the sphere of ${SPH[n - 1].name.replace(/^The /, "the ")}.`); go(n); } else say("There are eight gates, numbered one to eight."); },
     plate: (a) => { const n = parseInt(a, 10); n ? plateInfo(n) : say("Name a plate by its number, from 1 to 777."); },
     oracle: () => { say("Go down to the Eighth Gate. I have shuffled the deck for you."); go(8); setTimeout(() => $("#reshuffle").click(), 900); },
+    hierophants: () => { say("Seven plates I made by my own hand: the Eye of Ra, the Emerald Tablet, AUM, the Ophanim, Yggdrasil, the Phoenix and the Sun Stone. Behold them."); document.getElementById("hierophants").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); },
     play: () => { say("You would play Thoth at his own game? Come to my hall. I have dealt the cards."); document.getElementById("thoth").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); },
     inscribe: () => { say("Go to the end of the Eighth Gate and write your name in my book. It will stand you in the Outer Court."); document.getElementById("bookForm").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); },
     seats: async () => { try { const r = await gate("/stats"); say(`The Inner Sanctum holds ${r.sanctum} of ${r.sanctumCap}. The Outer Court holds ${r.court} names.`); } catch { say("The scribe is away. Ask me again soon."); } },
@@ -1580,11 +1623,37 @@ function startHero() {
   select(0);
 })();
 
+
+/* ====== the Seven Hierophants ====== */
+(() => {
+  const H = D.hierophants || [];
+  if (!H.length) return;
+  let cur = 0, last = 0;
+  const show = (i, user) => {
+    cur = (i + H.length) % H.length; if (user) last = Date.now();
+    const h = H[cur];
+    setVid($("#hVid"), big(h.id), poster(h.id)); $("#hVid").setAttribute("aria-label", h.name);
+    $("#hNum").textContent = ROMAN(h.id); $("#hName").textContent = h.name;
+    $("#hTrad").textContent = `${h.tradition} · ${h.opus} · token #${h.id}`; $("#hLore").textContent = h.lore + ".";
+    $$("#hPicks button").forEach((b, k) => { b.classList.toggle("on", k === cur); b.setAttribute("aria-selected", k === cur); });
+    if (user) AU.bell(523.25 * Math.pow(2, cur / 12), 0.12);
+  };
+  H.forEach((h, i) => {
+    const b = el("button", { type: "button", role: "tab", "aria-label": h.name }, el("span", { text: ROMAN(h.id) }));
+    b.style.backgroundImage = `url(${th(h.id)})`; b.onclick = () => show(i, true);
+    $("#hPicks").append(b);
+  });
+  $("#hOpen").onclick = () => openPlate(H[cur].id);
+  let vis = false; new IntersectionObserver(es => vis = es[0].isIntersecting, { threshold: .3 }).observe($("#hVid"));
+  if (!REDUCED) setInterval(() => { if (vis && Date.now() - last > 20000 && !$("#dlg").open) show(cur + 1); }, 9000);
+  show(0);
+})();
+
 /* ====== Gate V · rarity (single series: one hue; labelled rows double as the table) ====== */
 (() => {
   const C = D.counts, rarest = k => Object.entries(C[k]).sort((a, b) => a[1] - b[1])[0];
   const [rm, rmc] = rarest("Mystery"), [ro, roc] = rarest("Opus");
-  [["Hierophants", "7 of 777", "The highest degree: the rarest signs in the folio"], ["Rarest mystery", rm, `${rmc} of ${D.supply}`], ["Rarest opus", ro, `${roc} of ${D.supply}`], ["Unique combinations", "777 / 777", "Every plate is one of a kind"]]
+  [["Hierophants", "7 of 777", "Seven hand-composed one-of-ones, found nowhere else"], ["Rarest mystery", rm, `${rmc} of ${D.supply}`], ["Rarest opus", ro, `${roc} of ${D.supply}`], ["Unique combinations", "777 / 777", "Every plate is one of a kind"]]
     .forEach(([k, v, s], i) => $("#tiles").append(el("div", { class: `tile hud reveal d${i + 1}` }, el("div", { class: "k", text: k }), el("b", { text: v }), el("span", { text: s }))));
   const order = ["Degree", "Mystery", "Opus", "Halo", "Glyph Ring", "Frame", "Motto", "Tradition", "Form"].filter(k => C[k]);
   const tabs = $("#tabs"), bars = $("#bars");

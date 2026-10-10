@@ -1,12 +1,12 @@
 {
   "name": "Plate XV: The Valknut",
-  "description": "Three triangles knotted together, carved on the picture stones beside Odin and the fallen: the knot of the slain. Struck in Tyrian Purple: the dye of emperors and hierophants. Degree of Adept, rank 151 of the folio. “ΕΝ ΤΟ ΠΑΝ”: One is the All.",
+  "description": "Three triangles knotted together, carved on the picture stones beside Odin and the fallen: the knot of the slain. Struck in Tyrian Purple: the dye of emperors and hierophants. Degree of Initiate, rank 156 of the folio. “ΕΝ ΤΟ ΠΑΝ”: One is the All.",
   "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/15.jpg",
   "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/15.mp4",
   "attributes": [
     {
       "trait_type": "Degree",
-      "value": "Adept"
+      "value": "Initiate"
     },
     {
       "trait_type": "Mystery",

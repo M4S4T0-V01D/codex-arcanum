@@ -1,0 +1,28 @@
+{
+  "name": "Plate CCCXXXIII: Yggdrasil, the World Tree",
+  "description": "The ash that holds the nine worlds in its branches and roots, where Odin hung nine nights to win the runes, with the serpent of Midgard coiled about its waist. Struck in World Ash: ash-silver under the northern lights. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/333.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/333.mp4",
+  "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Hierophant"
+    },
+    {
+      "trait_type": "Mystery",
+      "value": "Yggdrasil, the World Tree"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Norse Mysteries"
+    },
+    {
+      "trait_type": "Form",
+      "value": "One of One"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "World Ash"
+    }
+  ]
+}

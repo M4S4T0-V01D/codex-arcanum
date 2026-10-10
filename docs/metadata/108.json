@@ -1,0 +1,28 @@
+{
+  "name": "Plate CVIII: AUM, the Pranava",
+  "description": "The sacred syllable from which the Vedas say the worlds were sounded into being, enthroned on the lotus and ringed by the Gayatri and a mala of one hundred and eight beads. Struck in Saffron Night: saffron and the violet of the night before the first sound. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/108.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/108.mp4",
+  "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Hierophant"
+    },
+    {
+      "trait_type": "Mystery",
+      "value": "AUM, the Pranava"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Vedic Mysteries"
+    },
+    {
+      "trait_type": "Form",
+      "value": "One of One"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Saffron Night"
+    }
+  ]
+}

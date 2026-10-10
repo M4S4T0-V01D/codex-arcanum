@@ -1,0 +1,28 @@
+{
+  "name": "Plate CDXXXII: The Phoenix",
+  "description": "The Bennu, the bird of Heliopolis, that burns upon its nest of spices and rises again from its own ashes: the alchemists' sign of the reddened Stone. Struck in Phoenix Flame: the fire the Bennu kindles from its own wings. One of the Seven Hierophants: a single plate, composed by hand, of which there is no other.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/432.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/432.mp4",
+  "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Hierophant"
+    },
+    {
+      "trait_type": "Mystery",
+      "value": "The Phoenix"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Alchemy & Egypt"
+    },
+    {
+      "trait_type": "Form",
+      "value": "One of One"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Phoenix Flame"
+    }
+  ]
+}

@@ -25,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from arcana.layers import MOTTOS
 from arcana.palettes import PALETTES
 from arcana.sigils import SIGILS
+from arcana.hierophants import ONE_OF_ONE
 from arcana.traits import DEGREES, describe, roll_collection, token_name
 from gen import TRAIT_ORDER, render_one
 
@@ -38,8 +39,8 @@ PLATES = os.path.join(DOCS, "plates")
 
 
 def showcase_ids(allt):
-    ids = list(range(1, 37))
-    want = {(k, v) for k, s in SIGILS.items() for v in ([v for v, _ in s["variants"]] or [None])}
+    ids = list(range(1, 37)) + [i for i, t in allt.items() if t.get("one") and i > 36]
+    want = {(k, v) for k, s in SIGILS.items() if not s.get("one") for v in ([v for v, _ in s["variants"]] or [None])}
     figure_pick = {}
     for tid, tok in allt.items():
         key = (tok["sigil"], tok["variant"])
@@ -51,9 +52,9 @@ def showcase_ids(allt):
     opus_pick = {}
     for tid, tok in allt.items():
         o = tok["traits"]["Opus"]
-        if o not in opus_pick:
+        if o not in opus_pick and not tok.get("one"):
             # prefer a plate already in the showcase
-            inside = next((i for i in ids if allt[i]["traits"]["Opus"] == o), None)
+            inside = next((i for i in ids if allt[i]["traits"]["Opus"] == o and not allt[i].get("one")), None)
             opus_pick[o] = inside or tid
             if opus_pick[o] not in ids:
                 ids.append(opus_pick[o])
@@ -75,6 +76,8 @@ def poster(src_png, dst, size=540):
 def card_stats(tok):
     """Side values (top, right, bottom, left) for the Game of Thoth, 1-9
     (10 written as A). Total power rises with the initiatory degree."""
+    if tok.get("one"):
+        return [9, 10, 9, 8] if tok["id"] % 2 else [10, 8, 9, 9]  # the Hierophants: mighty, never perfect
     rng = random.Random(f"thoth:{tok['id']}")
     lvl = tok["degree_level"]  # 1 Neophyte .. 5 Hierophant
     total = rng.randint(14, 17) + 3 * (lvl - 1)
@@ -169,14 +172,17 @@ def main():
                        "forms": [v for v, _ in s["variants"]],
                        "plate": next((figure_pick[(k, v)] for v in ([v for v, _ in s["variants"]] or [None])
                                       if (k, v) in figure_pick), None),
-                       "count": counts["Mystery"][s["name"]]} for k, s in SIGILS.items()],
+                       "count": counts["Mystery"][s["name"]]} for k, s in SIGILS.items() if not s.get("one")],
+        "hierophants": [{"id": i, "key": allt[i]["sigil"], "name": SIGILS[allt[i]["sigil"]]["name"],
+                         "tradition": allt[i]["traits"]["Tradition"], "opus": allt[i]["traits"]["Opus"],
+                         "lore": SIGILS[allt[i]["sigil"]]["lore"]} for i in sorted(ONE_OF_ONE)],
         "opus": [{"name": n, "lore": p["lore"], "count": counts["Opus"][n], "plate": opus_pick[n],
                   "bg": ["#%02x%02x%02x" % c for c in p["bg"]],
                   "ink": None if p["ink"] == "iridescent" else ["#%02x%02x%02x" % c for c in p["ink"]],
-                  "accent": "#%02x%02x%02x" % p["accent"]} for n, p in PALETTES.items()],
+                  "accent": "#%02x%02x%02x" % p["accent"]} for n, p in PALETTES.items() if not p.get("one")],
         "mottos": {k: v[1] for k, v in MOTTOS.items() if v[1]},
     }
-    hero = [t for t in (7, 30, 4, 23, 32, 13, 1, 31, 25, 36) if t in ids]
+    hero = [t for t in (7, 30, 108, 4, 23, 144, 32, 13, 432, 1, 31, 333, 25, 42, 777) if t in ids]
     data["hero"] = hero
     og_image([hero[0], hero[1], hero[2]], os.path.join(DOCS, "og.png"))
 

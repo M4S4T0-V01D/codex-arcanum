@@ -1,8 +1,13 @@
 {
   "name": "Plate XLIII: The Hieroglyphic Monad",
-  "description": "John Dee's Monas Hieroglyphica (1564): Moon, Sun, the cross of the Elements and the fire of Aries, all planets folded into one glyph. Struck in Viriditas: the greening power, the colour of the Emerald Tablet. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/43.gif",
+  "description": "John Dee's Monas Hieroglyphica (1564): Moon, Sun, the cross of the Elements and the fire of Aries, all planets folded into one glyph. Struck in Viriditas: the greening power, the colour of the Emerald Tablet. Degree of Neophyte, rank 391 of the folio. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/43.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/43.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Hieroglyphic Monad"

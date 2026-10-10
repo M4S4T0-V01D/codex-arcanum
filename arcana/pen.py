@@ -9,9 +9,9 @@ import math
 from contextlib import contextmanager
 from functools import lru_cache
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
-LAYERS = ("faint", "fill", "ink", "accent")
+LAYERS = ("faint", "light", "fill", "flare", "ink", "accent")  # light = behind fills, flare = in front
 UNIT = 0.29  # unit radius as a fraction of canvas width
 
 FONT_DIR = "/usr/share/fonts/noto/"
@@ -76,6 +76,7 @@ def _mul(a, b):
 class Pen:
     def __init__(self, size, ss=2):
         self.size, self.ss = size, ss
+        self.k = size / 512  # artwork is specified at 512px; everything scales with it
         self.N = N = size * ss
         self.layers = {k: Image.new("L", (N, N), 0) for k in LAYERS}
         self.draw = {k: ImageDraw.Draw(v) for k, v in self.layers.items()}
@@ -103,6 +104,27 @@ class Pen:
         finally:
             self.m, self.wmul, self.rot_total = saved
 
+    @contextmanager
+    def clip(self, pts):
+        """Everything drawn inside the block is confined to polygon `pts`."""
+        saved, saved_draw = self.layers, self.draw
+        self.layers = {k: Image.new("L", (self.N, self.N), 0) for k in LAYERS}
+        self.draw = {k: ImageDraw.Draw(v) for k, v in self.layers.items()}
+        mask = Image.new("L", (self.N, self.N), 0)
+        ImageDraw.Draw(mask).polygon([self.P(*q) for q in pts], fill=255)
+        try:
+            yield self
+        finally:
+            drawn = self.layers
+            self.layers, self.draw = saved, saved_draw
+            any_ink = Image.new("L", mask.size, 0)
+            for k in LAYERS:
+                any_ink = ImageChops.lighter(any_ink, drawn[k])
+            m = ImageChops.multiply(mask, any_ink.point(lambda v: 255 if v else 0))
+            for k in LAYERS:
+                self.layers[k].paste(drawn[k], (0, 0), m)
+            self.draw = {k: ImageDraw.Draw(v) for k, v in self.layers.items()}
+
     def P(self, x, y):
         m = self.m
         return (m[0] * x + m[1] * y + m[2], m[3] * x + m[4] * y + m[5])
@@ -112,7 +134,7 @@ class Pen:
         return math.sqrt(abs(m[0] * m[4] - m[1] * m[3]))
 
     def W(self, w):
-        return max(1, int(round(w * self.ss * self.wmul)))
+        return max(1, int(round(w * self.ss * self.wmul * self.k)))
 
     # ---- primitives ---------------------------------------------------
     def line(self, pts, w=2.0, layer="ink", v=255, closed=False):
@@ -169,7 +191,7 @@ class Pen:
 
     def dot(self, x, y, rpx, layer="ink", v=255):
         X, Y = self.P(x, y)
-        r = rpx * self.ss
+        r = rpx * self.ss * self.k
         self.draw[layer].ellipse((X - r, Y - r, X + r, Y + r), fill=int(v))
 
     def text(self, s, x, y, size, key="serif", layer="ink", v=255, angle=None, upright=False):
@@ -181,10 +203,48 @@ class Pen:
         if angle is not None:
             a += angle
         a = round(a * 2) / 2
-        im = glyph_mask(s, key, int(round(size * self.ss)), a % 360)
+        im = glyph_mask(s, key, int(round(size * self.ss * self.k)), a % 360)
         X, Y = self.P(x, y)
         box = (int(round(X - im.width / 2)), int(round(Y - im.height / 2)))
         self.layers[layer].paste(int(v), box, im)
+
+    # ---- light ----------------------------------------------------------
+    def ray(self, cx, cy, ang, r0, r1, w0, w1, v=255, layer="light", steps=16, core=True):
+        """A beam of light from radius r0 to r1 along `ang` (deg), width w0 -> w1
+        (unit coords). Built from nested wedges so it is brightest at its
+        source and fades out along its length; the compositor softens it."""
+        if v <= 0:
+            return
+        a = math.radians(ang)
+        ux, uy = math.cos(a), math.sin(a)
+        nx, ny = -uy, ux
+        x0, y0 = cx + ux * r0, cy + uy * r0
+        for k in range(steps):  # longest + dimmest first, shorter + brighter on top
+            f = 1 - k / steps
+            L = r0 + (r1 - r0) * f
+            w = w0 + (w1 - w0) * f
+            x1, y1 = cx + ux * L, cy + uy * L
+            pts = [(x0 + nx * w0 / 2, y0 + ny * w0 / 2), (x1 + nx * w / 2, y1 + ny * w / 2),
+                   (x1 - nx * w / 2, y1 - ny * w / 2), (x0 - nx * w0 / 2, y0 - ny * w0 / 2)]
+            self.draw[layer].polygon([self.P(*q) for q in pts], fill=int(v * (k / steps) ** 1.15))
+        if core and w1 > 0.02:  # a bright narrow shaft inside the soft body
+            self.ray(cx, cy, ang, r0, r0 + (r1 - r0) * 0.9, w0 * 0.35, w1 * 0.22, v, layer, steps=10, core=False)
+
+    def glow(self, x, y, r, v=255, layer="flare", steps=10):
+        """Soft radial light: concentric discs, brightest at the centre."""
+        if v <= 0:
+            return
+        for k in range(steps):
+            rr = r * (1 - k / steps)
+            self.draw[layer].polygon([self.P(*q) for q in self.circle_pts(x, y, rr, n=48)[:-1]],
+                                     fill=int(v * ((k + 1) / steps) ** 1.8))
+
+    def sparkle(self, x, y, size, v=255, rot=0.0, points=4, layer="flare"):
+        """A star of light: long and short spikes plus a hot core."""
+        for j in range(points * 2):
+            L = size if j % 2 == 0 else size * 0.45
+            self.ray(x, y, rot + 90 + j * 180 / points, 0, L, size * 0.16, 0.0, v, layer, steps=8)
+        self.glow(x, y, size * 0.35, v, layer, steps=6)
 
     # ---- output -------------------------------------------------------
     def masks(self):

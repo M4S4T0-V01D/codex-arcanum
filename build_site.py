@@ -9,9 +9,11 @@ Mystery has a live plate on the site. Rarity numbers come from the full
 777-token roll, not just the showcase.
 """
 import argparse
+import glob
 import hashlib
 import json
 import os
+import random
 import shutil
 import subprocess
 from collections import Counter
@@ -22,7 +24,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from arcana.layers import MOTTOS
 from arcana.palettes import PALETTES
 from arcana.sigils import SIGILS
-from arcana.traits import describe, roll_collection, token_name
+from arcana.traits import DEGREES, describe, roll_collection, token_name
 from gen import TRAIT_ORDER, render_one
 
 SEED = "codex-arcanum-1928"
@@ -56,9 +58,31 @@ def showcase_ids(allt):
     return sorted(ids), figure_pick, opus_pick
 
 
-def small_gif(src, dst):
-    subprocess.run(["gifsicle", "--resize", "256x256", "--colors", "256", "-O3", "--lossy=45",
-                    src, "-o", dst], check=True)
+def small_mp4(src, dst, size=360, crf=26):
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", src, "-vf", f"scale={size}:{size}:flags=lanczos",
+                    "-c:v", "libx264", "-preset", "slow", "-crf", str(crf), "-pix_fmt", "yuv420p",
+                    "-movflags", "+faststart", "-an", dst], check=True)
+
+
+def poster(src_png, dst, size=540):
+    im = Image.open(src_png).convert("RGB")
+    im.thumbnail((size, size), Image.LANCZOS)
+    im.save(dst, quality=88, optimize=True)
+
+
+def card_stats(tok):
+    """Side values (top, right, bottom, left) for the Game of Thoth, 1-9
+    (10 written as A). Total power rises with the initiatory degree."""
+    rng = random.Random(f"thoth:{tok['id']}")
+    lvl = tok["degree_level"]  # 1 Neophyte .. 5 Hierophant
+    total = rng.randint(14, 17) + 3 * (lvl - 1)
+    cap = 10 if lvl == 5 else 9
+    sides = [1, 1, 1, 1]
+    while sum(sides) < total:
+        i = rng.randrange(4)
+        if sides[i] < cap:
+            sides[i] += 1
+    return sides
 
 
 def og_image(ids, out):
@@ -66,7 +90,7 @@ def og_image(ids, out):
     im = Image.new("RGB", (W, H), (10, 8, 6))
     d = ImageDraw.Draw(im)
     for i, tid in enumerate(ids[:3]):
-        th = Image.open(os.path.join(PLATES, "thumbs", f"{tid}.png")).convert("RGB").resize((330, 330), Image.LANCZOS)
+        th = Image.open(os.path.join(PLATES, "poster", f"{tid}.jpg")).convert("RGB").resize((330, 330), Image.LANCZOS)
         im.paste(th, (60 + i * 365, 230))
     glow = Image.new("L", (W, H), 0)
     f = ImageFont.truetype("/usr/share/fonts/noto/NotoSerifDisplay-Medium.ttf", 92)
@@ -91,15 +115,23 @@ def main():
     os.makedirs(os.path.join(PLATES, "thumbs"), exist_ok=True)
     os.makedirs(os.path.join(PLATES, "sm"), exist_ok=True)
 
-    todo = [allt[i] for i in ids if a.fresh or not os.path.exists(os.path.join(PLATES, f"{i}.gif"))]
-    job = dict(size=512, frames=60, delay=70, lossy=30, out=PLATES)
+    os.makedirs(os.path.join(PLATES, "poster"), exist_ok=True)
+    todo = [allt[i] for i in ids if a.fresh or not os.path.exists(os.path.join(PLATES, f"{i}.mp4"))]
+    job = dict(size=1080, frames=105, fps=25, ss=2, crf=18, gif_size=0, lossy=0, out=PLATES)
     with ProcessPoolExecutor(a.workers) as ex:
-        for n, (tid, size) in enumerate(ex.map(render_one, [(t, job) for t in todo]), 1):
-            print(f"[{n}/{len(todo)}] plate {tid} ({size / 1e6:.2f} MB)", flush=True)
+        for n, (tid, sizes) in enumerate(ex.map(render_one, [(t, job) for t in todo]), 1):
+            print(f"[{n}/{len(todo)}] plate {tid} (mp4 {sizes['.mp4'] / 1e6:.1f} MB)", flush=True)
     for i in ids:
-        sm = os.path.join(PLATES, "sm", f"{i}.gif")
-        if a.fresh or not os.path.exists(sm):
-            small_gif(os.path.join(PLATES, f"{i}.gif"), sm)
+        png, smp = os.path.join(PLATES, f"{i}.png"), os.path.join(PLATES, "sm", f"{i}.mp4")
+        if os.path.exists(png):
+            poster(png, os.path.join(PLATES, "poster", f"{i}.jpg"))
+            os.remove(png)  # the full PNG stays out of the site; posters are enough
+        if a.fresh or not os.path.exists(smp):
+            small_mp4(os.path.join(PLATES, f"{i}.mp4"), smp)
+    # drop media from the old GIF-based site
+    for pat in ("*.gif", "sm/*.gif", "thumbs/*.png"):
+        for old in glob.glob(os.path.join(PLATES, pat)):
+            os.remove(old)
 
     # token metadata for the showcase (same JSON as gen.py writes)
     meta_dir = os.path.join(DOCS, "metadata")
@@ -108,7 +140,8 @@ def main():
         tok = allt[i]
         with open(os.path.join(meta_dir, f"{i}.json"), "w", encoding="utf-8") as f:
             json.dump({"name": token_name(tok), "description": describe(tok),
-                       "image": f"{SITE_URL}plates/{i}.gif",
+                       "image": f"{SITE_URL}plates/poster/{i}.jpg",
+                       "animation_url": f"{SITE_URL}plates/{i}.mp4",
                        "attributes": [{"trait_type": k, "value": tok["traits"][k]}
                                       for k in TRAIT_ORDER if k in tok["traits"]]},
                       f, ensure_ascii=False, indent=2)
@@ -125,7 +158,9 @@ def main():
     data = {
         "supply": SUPPLY, "seed": SEED, "provenance": prov, "repo": REPO_URL,
         "counts": {k: dict(c.most_common()) for k, c in counts.items()},
-        "tokens": [{"id": i, "name": token_name(allt[i]), "desc": describe(allt[i]),
+        "degrees": [{"name": n, "count": counts["Degree"][n]} for n, _ in DEGREES],
+        "tokens": [{"id": i, "name": token_name(allt[i]), "desc": describe(allt[i]), "rank": allt[i]["rank"],
+                    "level": allt[i]["degree_level"], "card": card_stats(allt[i]),
                     "traits": {k: allt[i]["traits"][k] for k in TRAIT_ORDER if k in allt[i]["traits"]}}
                    for i in ids],
         "mysteries": [{"key": k, "name": s["name"], "tradition": s["tradition"], "lore": s["lore"],

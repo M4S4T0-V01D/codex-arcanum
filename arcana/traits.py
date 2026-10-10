@@ -2,6 +2,7 @@
 seed, token id), and duplicates are resolved by rolling the whole supply in
 id order — so a 24-piece preview and the full run agree on every token."""
 import hashlib
+import math
 import random
 
 from .layers import FRAMES, HALOS, MOTTOS, RINGS
@@ -48,6 +49,46 @@ def roll(token_id, seed, salt=0):
                 seed=int(hashlib.sha256(f"{seed}:{token_id}:{salt}".encode()).hexdigest()[:12], 16))
 
 
+# Initiatory degrees, highest first: (name, number of plates at supply 777).
+DEGREES = [("Hierophant", 7), ("Magus", 40), ("Adept", 110), ("Initiate", 220), ("Neophyte", 400)]
+SCORED = ["Figure", "Opus", "Halo", "Glyph Ring", "Frame", "Motto"]
+
+
+def _scored(t):
+    tr = t["traits"]
+    out = {k: tr[k] for k in SCORED if k in tr}
+    out["Figure"] = tr["Mystery"] + (" / " + tr["Form"] if "Form" in tr else "")
+    return out
+
+
+def assign_degrees(toks):
+    """Rank every token by trait rarity and slice the ranking into exact
+    counts per degree, scaled to the supply. Each trait contributes its
+    surprisal (-log frequency) divided by that trait's average surprisal,
+    so every trait category weighs the same."""
+    n = len(toks)
+    vals = {tid: _scored(t) for tid, t in toks.items()}
+    freq = {k: {} for k in SCORED}
+    for v in vals.values():
+        for k, x in v.items():
+            freq[k][x] = freq[k].get(x, 0) + 1
+    sur = {k: {x: -math.log(c / n) for x, c in freq[k].items()} for k in SCORED}
+    mean = {k: sum(sur[k][v[k]] for v in vals.values()) / n for k in SCORED}
+    score = {tid: sum(sur[k][x] / mean[k] for k, x in v.items()) for tid, v in vals.items()}
+    ranked = sorted(toks, key=lambda i: (-score[i], i))
+    total = sum(c for _, c in DEGREES)
+    cuts, acc = [], 0
+    for name, c in DEGREES:
+        acc += c
+        cuts.append((name, round(acc * n / total)))
+    for pos, tid in enumerate(ranked):
+        name = next(nm for nm, cut in cuts if pos < cut)
+        toks[tid]["traits"]["Degree"] = name
+        toks[tid]["degree_level"] = len(DEGREES) - [d for d, _ in DEGREES].index(name)
+        toks[tid]["rarity"] = round(score[tid], 3)
+        toks[tid]["rank"] = pos + 1
+
+
 def roll_collection(supply, seed):
     seen, out = set(), {}
     for tid in range(1, supply + 1):
@@ -60,6 +101,7 @@ def roll_collection(supply, seed):
             salt += 1
         seen.add(sig)
         out[tid] = tok
+    assign_degrees(out)
     return out
 
 
@@ -68,6 +110,8 @@ def describe(tok):
     tr = tok["traits"]
     pal = PALETTES[tr["Opus"]]
     lines = [f"{sig['lore']}.", f"Struck in {tr['Opus']}: {pal['lore']}."]
+    if "Degree" in tr:
+        lines.append(f"Degree of {tr['Degree']}, rank {tok['rank']} of the folio.")
     if tr["Motto"] != "None":
         lines.append(f"“{tr['Motto']}”: {MOTTOS[tr['Motto']][1]}.")
     return " ".join(lines)

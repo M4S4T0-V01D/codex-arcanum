@@ -1,15 +1,27 @@
 # Codex Arcanum
 
-Animated GIF NFT collection: **777 "plates"** of symbols from the world's
+Animated NFT collection: **777 "plates"** of symbols from the world's
 mystery traditions, styled after the engraved folio plates of works like
 Manly P. Hall's *The Secret Teachings of All Ages* (1928). Every plate is
 drawn procedurally from geometry. No scans or artwork are copied, so the
-images carry no third-party rights. Each GIF is a seamless 60-frame loop
-(512×512, 70 ms/frame, ≈4.2 s) of about 1–3 MB.
+images carry no third-party rights.
+
+Each plate is a seamless 4.2 s loop (105 frames at 25 fps), written three ways:
+
+| File | What | Metadata field |
+|---|---|---|
+| `<id>.mp4` | 1080×1080 H.264 master, about 3–4 MB | `animation_url` |
+| `<id>.gif` | 720×720, palette-optimised, ordered dither | `image` |
+| `<id>.png` | full-size poster (first frame) | |
+
+Rendering: line-work is supersampled 2×. Light is a separate pass: tapered
+beams with bright cores, radial streaks and haze, glows and sparkles. Ink
+gets a gold-leaf relief and a drop shadow, solid fills carry engraved
+hatching, and bloom is three blurs.
 
 ```
 python3 gen.py                    # 36-plate preview -> out/
-python3 gen.py --count 777        # full collection (~15 min on 11 cores, ~1.6 GB)
+python3 gen.py --count 777        # full collection (~1.5 h on 11 cores)
 python3 gen.py --only 7 42        # re-render specific plates
 python3 gen.py --all-figures      # one plate per figure/form, for QA
 python3 gen.py --base-uri ipfs://<CID>/   # set image URIs once uploaded
@@ -39,6 +51,20 @@ collection:
 | VI | Jupiter | Filterable gallery |
 | VII | Saturn | Specs and the provenance seal |
 | VIII | Ogdoad | Three-card oracle draw, mint (to be announced) |
+| ✶ | Ogdoad | **The Game of Thoth**: a card duel against Hermes |
+
+**The Game of Thoth.** Plates are cards with four edge values (1–9, A = 10)
+whose total rises with the Degree (`card_stats` in `build_site.py`). Players
+take turns laying cards on the 3×3 Magic Square of Saturn. A card whose
+edge beats the facing edge of an adjacent enemy card captures it. Three
+Hermetic laws apply:
+- **Correspondence:** a capture in the top or bottom row also turns the
+  mirrored enemy card in the opposite row.
+- **The Ouroboros:** a 1 captures a 9 or an A.
+- **The Quintessence:** the centre cell gives +1 to every edge.
+
+Hermes plays a greedy, risk-aware AI. The visitor's record is kept in
+localStorage.
 
 Extras: a "Speak with Hermes" console (type `help`), synthesized sound
 (off by default), and an easter egg (type the word of the stone). Rebuild
@@ -63,6 +89,7 @@ Hieroglyphs, Hebrew, Devanagari, Serif, Serif Display, Math).
 
 | Trait | Values |
 |---|---|
+| **Degree** | Hierophant (7), Magus (40), Adept (110), Initiate (220), Neophyte (400). Exact counts: every token is ranked by trait rarity (each trait's surprisal normalised so no category dominates) and the ranking is sliced. Each plate carries an engraved degree seal; the Hierophant's burns |
 | **Mystery** (28 figures) | Eye of Providence, Ouroboros, Squaring of the Circle, Hieroglyphic Monad, Tree of Life, Sri Yantra, Flower of Life, Metatron's Cube, Platonic Solid, Seal of Solomon, Eye of Horus, Ankh beneath the Aten, Caduceus, Rose Cross, Taijitu & Trigrams, Wheel of the Dharma, Pentalpha, Philosophical Egg, Tetractys, Triple Spiral, Enneagram, Chymical Wedding (Sol & Luna), Serpent Power, Astrolabe, Valknut, Pyramids of Giza, Eleusinian Ear of Grain, Orphic Egg |
 | **Tradition** | Follows from the figure (Freemasonry, Kabbalah, Tantra, Taoism, Norse, Eleusinian, Orphic, Pythagorean, …) |
 | **Form** | Variants for some figures: Radiant Delta / Unfinished Pyramid, Flower / Seed, and the five Platonic solids plus the Star Tetrahedron |

@@ -1,8 +1,13 @@
 {
   "name": "Plate VII: The Eye of Providence",
-  "description": "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. “ORDO AB CHAO”: Order out of chaos.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/7.gif",
+  "description": "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. Degree of Initiate, rank 361 of the folio. “ORDO AB CHAO”: Order out of chaos.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/7.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/7.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Initiate"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Eye of Providence"

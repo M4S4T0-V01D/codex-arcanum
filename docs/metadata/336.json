@@ -1,8 +1,13 @@
 {
   "name": "Plate CCCXXXVI: The Platonic Solid",
-  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Albedo: the whitening, the lunar washing of the matter. “SOLVE ET COAGULA”: Dissolve and coagulate.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/336.gif",
+  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Albedo: the whitening, the lunar washing of the matter. Degree of Neophyte, rank 472 of the folio. “SOLVE ET COAGULA”: Dissolve and coagulate.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/336.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/336.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Platonic Solid"

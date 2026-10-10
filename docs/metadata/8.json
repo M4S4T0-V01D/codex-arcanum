@@ -1,8 +1,13 @@
 {
   "name": "Plate VIII: The Pentalpha",
-  "description": "The pentagram of the Pythagoreans, sign of Hygieia, whose heart holds a smaller star, and that one another, without end. Struck in Citrinitas: the yellowing, the dawn of the solar light within the work. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/8.gif",
+  "description": "The pentagram of the Pythagoreans, sign of Hygieia, whose heart holds a smaller star, and that one another, without end. Struck in Citrinitas: the yellowing, the dawn of the solar light within the work. Degree of Neophyte, rank 452 of the folio. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/8.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/8.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Pentalpha"

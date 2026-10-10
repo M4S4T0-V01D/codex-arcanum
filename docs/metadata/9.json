@@ -1,8 +1,13 @@
 {
   "name": "Plate IX: The Chymical Wedding of Sun and Moon",
-  "description": "Sol and Luna, the red king and the white queen, circling toward the conjunction from which the Mercury of the wise is born. Struck in Albedo: the whitening, the lunar washing of the matter. “AZOTH”: The universal medicine: A to Z, Alpha to Omega.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/9.gif",
+  "description": "Sol and Luna, the red king and the white queen, circling toward the conjunction from which the Mercury of the wise is born. Struck in Albedo: the whitening, the lunar washing of the matter. Degree of Adept, rank 153 of the folio. “AZOTH”: The universal medicine: A to Z, Alpha to Omega.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/9.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/9.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Adept"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Chymical Wedding of Sun and Moon"

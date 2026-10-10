@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Codex Arcanum: generate animated GIF plates + NFT metadata.
+"""Codex Arcanum: generate animated plates + NFT metadata.
+
+Each plate is written as <id>.mp4 (1080x1080 H.264 master, the
+animation_url), <id>.gif (720px, palette-optimised, the image) and
+<id>.png (full-size poster).
 
   python3 gen.py                         # 36-plate preview into out/
   python3 gen.py --count 777             # full run
@@ -17,12 +21,12 @@ from concurrent.futures import ProcessPoolExecutor
 from PIL import Image
 
 from arcana import draw_plate
-from arcana.render import render_frames, save_gif
+from arcana.render import Encoder, iter_frames
 from arcana.sigils import SIGILS
 from arcana.traits import describe, roll_collection, token_name
 
 COLLECTION = "Codex Arcanum"
-TRAIT_ORDER = ["Mystery", "Tradition", "Form", "Opus", "Halo", "Glyph Ring", "Frame", "Motto"]
+TRAIT_ORDER = ["Degree", "Mystery", "Tradition", "Form", "Opus", "Halo", "Glyph Ring", "Frame", "Motto"]
 
 
 def parse():
@@ -33,10 +37,14 @@ def parse():
     ap.add_argument("--only", type=int, nargs="*", help="render just these token ids")
     ap.add_argument("--all-figures", action="store_true", help="pick one token per figure/form for QA")
     ap.add_argument("--seed", default="codex-arcanum-1928")
-    ap.add_argument("--size", type=int, default=512)
-    ap.add_argument("--frames", type=int, default=60)
-    ap.add_argument("--delay", type=int, default=70, help="ms per frame (GIF stores 10ms steps)")
-    ap.add_argument("--lossy", type=int, default=30, help="gifsicle --lossy level (0 = lossless)")
+    ap.add_argument("--size", type=int, default=1080, help="master (MP4/PNG) size in px")
+    ap.add_argument("--gif-size", type=int, default=720, help="GIF size in px (0 = no GIF)")
+    ap.add_argument("--frames", type=int, default=105, help="frames per loop (105 @ 25 fps = 4.2 s)")
+    ap.add_argument("--fps", type=int, default=25)
+    ap.add_argument("--ss", type=int, default=2, help="supersampling factor for line-work")
+    ap.add_argument("--crf", type=int, default=16, help="x264 quality (lower = better)")
+    ap.add_argument("--lossy", type=int, default=40, help="gifsicle --lossy level (0 = lossless)")
+    ap.add_argument("--csv-media", choices=["mp4", "gif"], default="mp4", help="file_name column of metadata.csv")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--out", default="out")
     ap.add_argument("--base-uri", default="ipfs://REPLACE_WITH_IMAGES_CID/",
@@ -46,13 +54,18 @@ def parse():
 
 def render_one(job):
     tok, a = job
-    frames = render_frames(tok, a["size"], a["frames"], draw_fn=draw_plate)
-    path = os.path.join(a["out"], f"{tok['id']}.gif")
-    save_gif(frames, path, a["delay"], a["lossy"])
-    thumb = frames[0].copy()
-    thumb.thumbnail((256, 256), Image.LANCZOS)
-    thumb.save(os.path.join(a["out"], "thumbs", f"{tok['id']}.png"))
-    return tok["id"], os.path.getsize(path)
+    base = os.path.join(a["out"], str(tok["id"]))
+    enc = Encoder(base, a["size"], a["fps"], a["gif_size"], a["crf"])
+    for i, fr in enumerate(iter_frames(tok, a["size"], a["frames"], a["ss"], draw_fn=draw_plate)):
+        if i == 0:
+            fr.save(base + ".png", optimize=True)
+            thumb = fr.copy()
+            thumb.thumbnail((360, 360), Image.LANCZOS)
+            thumb.save(os.path.join(a["out"], "thumbs", f"{tok['id']}.jpg"), quality=88)
+        enc.add(fr)
+    enc.close(a["lossy"])
+    sizes = {ext: os.path.getsize(base + ext) for ext in (".mp4", ".gif") if os.path.exists(base + ext)}
+    return tok["id"], sizes
 
 
 def attributes(tok):
@@ -64,7 +77,8 @@ def write_metadata(toks, a):
         meta = {
             "name": token_name(tok),
             "description": describe(tok),
-            "image": f"{a.base_uri}{tok['id']}.gif",
+            "image": f"{a.base_uri}{tok['id']}.gif" if a.gif_size else f"{a.base_uri}{tok['id']}.png",
+            "animation_url": f"{a.base_uri}{tok['id']}.mp4",
             "attributes": attributes(tok),
         }
         with open(os.path.join(a.out, f"{tok['id']}.json"), "w", encoding="utf-8") as f:
@@ -74,7 +88,7 @@ def write_metadata(toks, a):
         w = csv.writer(f)
         w.writerow(["tokenID", "name", "description", "file_name"] + [f"attributes[{k}]" for k in TRAIT_ORDER])
         for tok in toks:
-            w.writerow([tok["id"], token_name(tok), describe(tok), f"{tok['id']}.gif"] +
+            w.writerow([tok["id"], token_name(tok), describe(tok), f"{tok['id']}.{a.csv_media}"] +
                        [tok["traits"].get(k, "") for k in TRAIT_ORDER])
 
 
@@ -83,7 +97,7 @@ def write_gallery(toks, a):
     for tok in toks:
         tr = "".join(f"<li><b>{html.escape(k)}</b> {html.escape(tok['traits'][k])}</li>"
                      for k in TRAIT_ORDER if k in tok["traits"])
-        cards.append(f'<figure><img loading="lazy" src="{tok["id"]}.gif" width="256" height="256" alt="">'
+        cards.append(f'<figure><video src="{tok["id"]}.mp4" poster="thumbs/{tok["id"]}.jpg" muted loop autoplay playsinline preload="none" width="256" height="256"></video>'
                      f'<figcaption><h2>{html.escape(token_name(tok))}</h2><ul>{tr}</ul>'
                      f'<p>{html.escape(describe(tok))}</p></figcaption></figure>')
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -107,7 +121,7 @@ figcaption p{{font-size:12px;opacity:.7;margin:6px 0 2px}}
 def write_sheet(toks, a):
     ims = []
     for tok in toks:
-        pth = os.path.join(a.out, "thumbs", f"{tok['id']}.png")
+        pth = os.path.join(a.out, "thumbs", f"{tok['id']}.jpg")
         if os.path.exists(pth):
             ims.append(Image.open(pth))
     if not ims:
@@ -140,13 +154,14 @@ def main():
     else:
         ids = [i for i in range(a.start, a.start + a.count) if i in allt]
     toks = [allt[i] for i in ids]
-    job_args = dict(size=a.size, frames=a.frames, delay=a.delay, lossy=a.lossy, out=a.out)
+    job_args = dict(size=a.size, frames=a.frames, fps=a.fps, ss=a.ss, crf=a.crf, gif_size=a.gif_size, lossy=a.lossy, out=a.out)
     t0 = time.time()
     total = 0
     with ProcessPoolExecutor(a.workers) as ex:
-        for n, (tid, size) in enumerate(ex.map(render_one, [(t, job_args) for t in toks]), 1):
-            total += size
-            print(f"[{n}/{len(toks)}] #{tid} {allt[tid]['traits']['Mystery']} ({size / 1e6:.2f} MB)", flush=True)
+        for n, (tid, sizes) in enumerate(ex.map(render_one, [(t, job_args) for t in toks]), 1):
+            total += sum(sizes.values())
+            desc = ", ".join(f"{e[1:]} {v / 1e6:.1f} MB" for e, v in sizes.items())
+            print(f"[{n}/{len(toks)}] #{tid} {allt[tid]['traits']['Mystery']} ({desc})", flush=True)
     write_metadata(toks, a)
     write_gallery(toks, a)
     write_sheet(toks, a)

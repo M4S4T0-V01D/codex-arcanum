@@ -1,8 +1,13 @@
 {
   "name": "Plate XXI: The Astrolabe",
-  "description": "The instrument of the heavens: the turning rete of fixed stars above the tympan of the observer's sky. Struck in Viriditas: the greening power, the colour of the Emerald Tablet.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/21.gif",
+  "description": "The instrument of the heavens: the turning rete of fixed stars above the tympan of the observer's sky. Struck in Viriditas: the greening power, the colour of the Emerald Tablet. Degree of Initiate, rank 186 of the folio.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/21.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/21.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Initiate"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Astrolabe"

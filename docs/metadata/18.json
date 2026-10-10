@@ -1,8 +1,13 @@
 {
   "name": "Plate XVIII: The Platonic Solid",
-  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Nigredo: the blackening, where every matter is first dissolved.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/18.gif",
+  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Nigredo: the blackening, where every matter is first dissolved. Degree of Neophyte, rank 624 of the folio.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/18.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/18.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Platonic Solid"

@@ -1,8 +1,13 @@
 {
   "name": "Plate CXXX: The Flower of Life",
-  "description": "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold. Struck in Tyrian Purple: the dye of emperors and hierophants.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/130.gif",
+  "description": "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold. Struck in Tyrian Purple: the dye of emperors and hierophants. Degree of Neophyte, rank 568 of the folio.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/130.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/130.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Flower of Life"

@@ -1,8 +1,13 @@
 {
   "name": "Plate XXIV: The Enneagram",
-  "description": "Gurdjieff's symbol of perpetual motion: the Law of Three in the triangle, the Law of Seven in the circulating figure 1-4-2-8-5-7. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. “ΓΝΩΘΙ ΣΕΑΥΤΟΝ”: Know thyself (the Delphic maxim).",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/24.gif",
+  "description": "Gurdjieff's symbol of perpetual motion: the Law of Three in the triangle, the Law of Seven in the circulating figure 1-4-2-8-5-7. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. Degree of Adept, rank 72 of the folio. “ΓΝΩΘΙ ΣΕΑΥΤΟΝ”: Know thyself (the Delphic maxim).",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/24.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/24.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Adept"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Enneagram"

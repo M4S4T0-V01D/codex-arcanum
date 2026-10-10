@@ -1,8 +1,13 @@
 {
   "name": "Plate XXXIII: The Eye of Providence",
-  "description": "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world. Struck in Verdigris: copper and its green rust, the metal of Venus.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/33.gif",
+  "description": "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world. Struck in Verdigris: copper and its green rust, the metal of Venus. Degree of Neophyte, rank 666 of the folio.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/33.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/33.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Eye of Providence"

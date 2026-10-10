@@ -1,8 +1,13 @@
 {
   "name": "Plate XLVII: The Eye of Horus",
-  "description": "The Wedjat, the eye Horus lost fighting Set and Thoth made whole again: health, restoration and the full measure. Struck in Albedo: the whitening, the lunar washing of the matter. “OMNIA AB VNO”: All things from the One.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/47.gif",
+  "description": "The Wedjat, the eye Horus lost fighting Set and Thoth made whole again: health, restoration and the full measure. Struck in Albedo: the whitening, the lunar washing of the matter. Degree of Neophyte, rank 591 of the folio. “OMNIA AB VNO”: All things from the One.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/47.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/47.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Eye of Horus"

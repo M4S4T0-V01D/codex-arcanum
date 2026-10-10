@@ -1,8 +1,13 @@
 {
   "name": "Plate XLVIII: The Platonic Solid",
-  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Vermilion: cinnabar, the red sulphide of mercury.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/48.gif",
+  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Vermilion: cinnabar, the red sulphide of mercury. Degree of Initiate, rank 311 of the folio.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/48.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/48.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Initiate"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Platonic Solid"

@@ -8,13 +8,13 @@ from .pen import TAU, UNIT, font, lerp, polar, wave
 
 
 def halo_rays(p, t):
-    for i in range(48):
-        a = 90 + 7.5 * i + 15 * t
-        if i % 2:
-            p.line([polar(0.35, a), polar(1.5, a)], 1.2, "faint", 255)
-        else:
-            pts = [polar(lerp(0.35, 1.3, k / 30), a + 1.6 * math.sin(k / 30 * TAU * 2.5)) for k in range(31)]
-            p.line(pts, 1.0, "faint", 200)
+    n = 36
+    for i in range(n):
+        a = 90 + i * 360 / n
+        long = i % 2 == 0
+        L = (1.8 if long else 1.35) + 0.12 * wave(t, 2, i * 0.41)
+        p.ray(0, 0, a, 0.25, L, 0.03, 0.15 if long else 0.08, int(110 + 90 * wave(t, 1, -i / n)))
+    p.glow(0, 0, 1.0, 110, "light")
 
 
 def halo_emanation(p, t):
@@ -39,9 +39,7 @@ def halo_lattice(p, t):
 
 def halo_nimbus(p, t):
     b = 0.6 + 0.4 * wave(t, 1)
-    for k in range(14, 0, -1):
-        r = 0.2 + 1.3 * k / 14
-        p.disc(0, 0, r, "faint", int(b * 120 * (1 - k / 15) ** 1.5), occlude=False)
+    p.glow(0, 0, 1.45, int(150 * b), "light", steps=16)
 
 
 def halo_spheres(p, t):
@@ -49,6 +47,7 @@ def halo_spheres(p, t):
         p.circle(0, 0, r, 1.0, "faint", 220)
         a = 90 + 360 * (rev * t + ph)
         p.dot(*polar(r, a), 3.0, "accent", 230)
+        p.sparkle(*polar(r, a), 0.09, 220, rot=a)
         p.dot(*polar(r, a + 180), 2.0, "ink", 200)
 
 
@@ -88,9 +87,15 @@ def draw_ring(p, name, t):
     R = RING_R
     p.circle(0, 0, R + 0.1, 1.4, "ink", 220)
     p.circle(0, 0, R - 0.1, 1.4, "ink", 220)
+    # graduated scale just outside the ring, as on an engraved astrolabe limb
+    p.circle(0, 0, R + 0.16, 0.6, "ink", 150)
+    for i in range(180):
+        a = i * 2
+        L = 0.05 if i % 15 == 0 else (0.035 if i % 5 == 0 else 0.02)
+        p.line([polar(R + 0.16, a), polar(R + 0.16 - L, a)], 0.6 if i % 5 else 0.9, "ink", 170)
     if "text" in spec:
         text = spec["text"].replace("✦", "·")
-        f = font(spec["key"], spec["size"] * p.ss)
+        f = font(spec["key"], int(spec["size"] * p.ss * p.k))
         widths = [f.getlength(c) for c in text]
         total = sum(widths)
         a = 90.0
@@ -227,7 +232,7 @@ def draw_motto(p, text, t):
     R, max_span = 1.47, 96.0
     r_px = R * UNIT * p.size
     for size in (12, 11, 10, 9):
-        f = font(key, size * p.ss)
+        f = font(key, int(size * p.ss * p.k))
         widths = [f.getlength(c) / p.ss for c in text]
         span = math.degrees(sum(widths) / r_px)
         if span <= max_span:
@@ -239,3 +244,23 @@ def draw_motto(p, text, t):
         a += da
         if c != " ":
             p.text(c, *polar(R, ac), size, key, "ink", 240, angle=ac + 90)
+
+
+# ---- degree seal ----------------------------------------------------------
+
+def draw_degree(p, level, t):
+    """A small seal at the lower right: one point of light per degree (1-5).
+    The Hierophant's seal also burns."""
+    c = (_units(p, 0.405), -_units(p, 0.405))
+    r = 0.085
+    p.disc(*c, r, "fill")
+    p.circle(*c, r, 1.2, "ink", 230)
+    p.circle(*c, r * 0.78, 0.6, "ink", 170)
+    for i in range(level):
+        a = 90 - 360 * i / level if level > 1 else 90
+        q = polar(r * 0.45, a, *c) if level > 1 else c
+        p.dot(*q, 1.7, "accent", 255)
+    if level >= 4:
+        p.glow(*c, r * 2.2, int(120 + 80 * wave(t, 1)) if level == 5 else 90)
+    if level == 5:
+        p.sparkle(*c, r * 2.0, int(170 + 85 * wave(t, 2)), rot=45 * t)

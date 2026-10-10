@@ -1,4 +1,4 @@
-from .layers import FRAMES, HALOS, draw_motto, draw_ring
+from .layers import FRAMES, HALOS, draw_degree, draw_motto, draw_ring
 from .sigils import SIGILS
 
 
@@ -15,3 +15,5 @@ def draw_plate(p, t, tok):
         frame(p, t, tok)
     if tr["Motto"] != "None":
         draw_motto(p, tr["Motto"], t)
+    if "degree_level" in tok:
+        draw_degree(p, tok["degree_level"], t)

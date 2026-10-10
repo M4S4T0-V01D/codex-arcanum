@@ -22,28 +22,63 @@ def blink_at(t, centre=0.66, width=0.045):
 
 
 def eye(p, cx, cy, w, h, t, blink=0.0, look=(0.0, 0.0), lw=2.2, lashes=True):
+    """An all-seeing eye: calligraphic lids with kohl wings, crease, waterline,
+    curled lashes and a jewelled iris (striations, collarette, limbal ring,
+    breathing pupil, catchlights). `blink` 0..1 closes it."""
     o = max(0.04, 1.0 - blink)
-    n = 40
-    xs = [cx + w / 2 * (-1 + 2 * i / n) for i in range(n + 1)]
-    cs = [math.cos(math.pi * (-0.5 + i / n)) for i in range(n + 1)]
-    up = [(x, cy + h / 2 * c * o) for x, c in zip(xs, cs)]
-    lo = [(x, cy - h / 2 * c * o * 0.85) for x, c in zip(xs, cs)]
+    n = 64
+    us = [i / n for i in range(n + 1)]
+    px = 1 / 148.5 * lw  # one "line width" in unit coords
+    up_y = lambda u: h / 2 * math.sin(math.pi * u) ** 0.8 * o  # noqa: E731
+    lo_y = lambda u: -h / 2 * 0.8 * math.sin(math.pi * u) ** 1.15 * o  # noqa: E731
+    X = lambda u: cx + w * (u - 0.5)  # noqa: E731
+    up = [(X(u), cy + up_y(u)) for u in us]
+    lo = [(X(u), cy + lo_y(u)) for u in us]
     p.poly(up + lo[::-1], "fill")
+    # tear duct
+    p.disc(X(0.045), cy - h * 0.02 * o, h * 0.06 * max(o, 0.3), "accent", 90, occlude=False)
     if o > 0.12:
-        ir = h * 0.36
-        with p.tf(dx=cx + look[0] * w * 0.12, dy=cy + look[1] * h * 0.06, sy=o):
+        ir = h * 0.42
+        ix, iy = cx + look[0] * w * 0.12, cy + look[1] * h * 0.06 + h * 0.03
+        with p.clip(up + lo[::-1]), p.tf(dx=ix, dy=iy):
             p.disc(0, 0, ir, "fill")
-            p.circle(0, 0, ir, lw * 0.8, "accent", 230)
-            p.circle(0, 0, ir * 0.72, 1.0, "ink", 150)
-            p.disc(0, 0, ir * 0.42, "ink", occlude=False)
-            p.dot(ir * 0.25, ir * 0.25, 1.4, "accent", 255)
-    p.line(up, lw)
-    p.line(lo, lw)
+            p.glow(0, 0, ir * 1.5, int(120 + 60 * wave(t, 2)))
+            for k in range(48):  # striations
+                a = k * 7.5 + 4 * math.sin(TAU * t)
+                r1 = ir * (0.84 if k % 3 == 0 else 0.7 if k % 3 == 1 else 0.6)
+                p.line([polar(ir * 0.4, a), polar(r1, a)], 0.55, "ink", 150 if k % 3 else 200)
+            coll = [polar(ir * (0.56 + 0.05 * math.sin(math.radians(d) * 12)), d) for d in range(0, 360, 4)]
+            p.line(coll, 0.8, "accent", 190, closed=True)
+            p.circle(0, 0, ir, lw * 1.1, "accent", 240)
+            p.circle(0, 0, ir * 0.9, 0.6, "ink", 170)
+            pr = ir * (0.3 + 0.05 * wave(t, 1, 0.25))
+            p.disc(0, 0, pr, "fill")
+            p.circle(0, 0, pr, 0.9, "ink", 230)
+            p.dot(-ir * 0.32, ir * 0.34, 2.0, "accent", 255)
+            p.dot(ir * 0.24, -ir * 0.22, 1.0, "accent", 210)
+            p.sparkle(-ir * 0.32, ir * 0.34, ir * 0.45, 190)
+    # calligraphic lids: thick in the middle, hair-thin at the corners
+    p.poly(thick(up, [px * (0.6 + 2.6 * math.sin(math.pi * u) ** 0.7) for u in us]), "ink", occlude=False)
+    p.poly(thick(lo, [px * (0.4 + 1.3 * math.sin(math.pi * u)) for u in us]), "ink", occlude=False)
+    # waterline and crease
+    p.line([(X(u), cy + lo_y(u) * 0.78) for u in us[10:-10]], 0.6, "accent", 120)
+    crease = [(X(u), cy + up_y(u) * (1.25 + 0.15 * o) + h * 0.12) for u in us[8:-8]]
+    p.poly(thick(crease, [px * 0.9 * math.sin(math.pi * (i / (len(crease) - 1))) + 0.001 for i in range(len(crease))]), "ink", 210, occlude=False)
+    # kohl wings sweeping off both corners
+    ow = bezier3((X(1) - w * 0.02, cy), (X(1) + w * 0.08, cy + h * 0.02), (X(1) + w * 0.15, cy + h * 0.12), (X(1) + w * 0.2, cy + h * 0.3), 24)
+    p.poly(thick(ow, [px * 2.2 * (1 - i / 24) ** 0.8 + 0.0005 for i in range(25)]), "ink", occlude=False)
+    iw = bezier3((X(0) + w * 0.02, cy), (X(0) - w * 0.05, cy - h * 0.02), (X(0) - w * 0.08, cy - h * 0.12), (X(0) - w * 0.06, cy - h * 0.24), 18)
+    p.poly(thick(iw, [px * 1.6 * (1 - i / 18) ** 0.8 + 0.0005 for i in range(19)]), "ink", occlude=False)
     if lashes:
-        for i in range(5, n - 4, 6):
-            x, y = up[i]
-            k = (i / n - 0.5) * 1.4
-            p.line([(x, y), (x + k * h * 0.25, y + h * 0.22 * o)], lw * 0.55, "ink", 200)
+        for j in range(9):
+            u = 0.14 + 0.72 * j / 8
+            bx, by = X(u), cy + up_y(u)
+            L = h * (0.2 + 0.16 * math.sin(math.pi * u)) * (0.4 + 0.6 * o)
+            lean = (u - 0.5) * 1.3
+            tip = (bx + lean * L + w * 0.03, by + L * (0.4 + 0.6 * o))
+            ctrl = (bx + lean * L * 0.05, by + L * 0.95)
+            lash = bezier((bx, by), ctrl, tip, 12)
+            p.poly(thick(lash, [px * 0.85 * (1 - i / 12) ** 0.7 + 0.0003 for i in range(13)]), "ink", 230, occlude=False)
 
 
 def crescent(p, cx, cy, r, facing, depth=0.55, layer="ink"):
@@ -93,9 +128,15 @@ def wireframe(p, verts, edges, ry, rx, rz, scale, lw=2.2):
         k = (z + 1) / 2
         p.line([(pts[i][0] * scale, pts[i][1] * scale), (pts[j][0] * scale, pts[j][1] * scale)],
                lerp(1.0, lw, k), "ink", int(lerp(90, 255, k)))
+    for i, j in order:
+        z = (pts[i][2] + pts[j][2]) / 2
+        if z > 0:
+            p.line([(pts[i][0] * scale, pts[i][1] * scale), (pts[j][0] * scale, pts[j][1] * scale)], 5.0, "flare", int(110 * z))
     for x, y, z in pts:
         if z > -0.2:
             p.dot(x * scale, y * scale, lerp(1.2, 2.8, (z + 1) / 2), "accent", int(lerp(120, 255, (z + 1) / 2)))
+        if z > 0.2:
+            p.sparkle(x * scale, y * scale, 0.07 * scale / 0.5 * z, int(220 * z), rot=45)
 
 
 def lotus_petal(r0, r1, a, half):
@@ -135,18 +176,33 @@ def providence(p, t, v):
     blink = blink_at(t)
     look = (math.sin(TAU * t), 0.5 * math.sin(TAU * 2 * t))
     if v["variant"] == "Radiant Delta":
-        for i in range(36):
-            a = 90 + i * 10
-            L = (1.12 + 0.22 * wave(t, 2, i * 0.29)) if i % 2 else (1.30 + 0.12 * wave(t, 1, i * 0.17))
-            p.line([polar(0.6, a), polar(L, a)], 1.3 if i % 2 else 2.0, "ink", 170)
+        n = 32
+        for i in range(n):
+            a = 90 + i * 360 / n
+            long = i % 2 == 0
+            L = (1.62 if long else 1.22) + 0.14 * wave(t, 2, i * 0.37)
+            v = int(255 * (0.5 + 0.5 * wave(t, 1, -i / n)))
+            p.ray(0, -0.08, a, 0.3, L, 0.025, 0.15 if long else 0.08, int(v * 0.85))
+        p.glow(0, -0.08, 0.75, 170, "light")
         tri = ngon(3, 1.0, 90, 0, -0.08)
         p.poly(tri, "fill")
         p.line(tri, 3.0, closed=True)
         p.line(ngon(3, 0.88, 90, 0, -0.08), 1.2, "ink", 180, closed=True)
+        p.glow(0, -0.12, 0.42, int(150 + 70 * wave(t, 2)))
         eye(p, 0, -0.12, 0.74, 0.34, t, blink, look)
     else:
         top, base, hw = 0.98, -0.92, 1.05
         half = lambda y: hw * (top - y) / (top - base)  # noqa: E731
+        dy = 0.035 * math.sin(TAU * t)
+        cy0 = 0.12 + dy
+        cap = [(-half(0.12), cy0), (half(0.12), cy0), (0, top + dy)]
+        cc = (0, (cy0 * 2 + top + dy) / 3)
+        for i in range(24):
+            a = i * 15 + 90
+            long = i % 2 == 0
+            L = (1.3 if long else 0.9) + 0.12 * wave(t, 2, i * 0.31)
+            p.ray(*cc, a, 0.18, L, 0.02, 0.13 if long else 0.07, int(220 * (0.5 + 0.5 * wave(t, 1, -i / 24))))
+        p.glow(*cc, 0.6, 180, "light")
         y1 = -0.02
         body = [(-hw, base), (hw, base), (half(y1), y1), (-half(y1), y1)]
         p.poly(body, "fill")
@@ -163,16 +219,9 @@ def providence(p, t, v):
                 x += step
         p.line(body, 2.6, closed=True)
         p.text("MDCCLXXVI", 0, base + 0.06, 10, "serif", "ink", 230)
-        dy = 0.035 * math.sin(TAU * t)
-        cy0 = 0.12 + dy
-        cap = [(-half(0.12), cy0), (half(0.12), cy0), (0, top + dy)]
-        cc = (0, (cy0 * 2 + top + dy) / 3)
-        for i in range(28):
-            a = i * 360 / 28 + 90
-            L = (0.78 if i % 2 else 0.96) + 0.1 * wave(t, 2, i * 0.31)
-            p.line([polar(0.3, a, *cc), polar(L, a, *cc)], 1.3 if i % 2 else 1.9, "ink", 170)
         p.poly(cap, "fill")
         p.line(cap, 2.6, closed=True)
+        p.glow(cc[0], cc[1] - 0.03, 0.26, int(150 + 70 * wave(t, 2)))
         eye(p, cc[0], cc[1] - 0.03, 0.44, 0.2, t, blink, look, 1.8, lashes=False)
 
 
@@ -181,44 +230,119 @@ def providence(p, t, v):
        rings=("Greek Alphabet", "Planetary Metals", "Alchemical Elements", "Emerald Tablet"))
 def ouroboros(p, t, v):
     R, a0, span = 0.76, 88.0, 344.0
-    n = 200
-    th = lambda s: 0.18 * (1 - s) ** 0.85 + 0.03 * s  # noqa: E731
-    ss = [i / n for i in range(n + 1)]
-    centre = [polar(R, a0 - span * s) for s in ss]
-    body = thick(centre, [th(s) for s in ss])
-    p.poly(body, "fill")
-    # belly band (lighter half of the Chrysopoeia serpent)
-    belly = thick([polar(R - th(s) * 0.22, a0 - span * s) for s in ss], [th(s) * 0.42 for s in ss])
-    p.poly(belly, "accent", 70, occlude=False)
-    p.line(body, 2.2, closed=True)
-    N = 38
-    for k in range(N):
-        s = (k + t) / N
-        if s > 0.96 or s < 0.02:
-            continue
+    n = 240
+
+    def th(s):  # slim neck, thick body, long tapering tail
+        if s < 0.22:
+            return 0.115 + 0.075 * math.sin(math.pi / 2 * s / 0.22)
+        return 0.012 + 0.178 * (1 - (s - 0.22) / 0.78) ** 0.85
+
+    def frame(s, off=0.0):
+        """Point at body fraction s, offset `off` (in half-widths, + = outside)."""
         a = math.radians(a0 - span * s)
-        w = th(s)
         ur = (math.cos(a), math.sin(a))
-        ut = (math.sin(a), -math.cos(a))
-        c = (R * ur[0], R * ur[1])
-        pts = [(c[0] + ur[0] * w * 0.36 + ut[0] * w * 0.28, c[1] + ur[1] * w * 0.36 + ut[1] * w * 0.28),
-               (c[0] - ut[0] * w * 0.12, c[1] - ut[1] * w * 0.12),
-               (c[0] - ur[0] * w * 0.36 + ut[0] * w * 0.28, c[1] - ur[1] * w * 0.36 + ut[1] * w * 0.28)]
-        p.line(pts, 1.4, "ink", 210)
+        ut = (math.sin(a), -math.cos(a))  # toward the tail
+        r = R + off * th(s) / 2
+        return (r * ur[0], r * ur[1]), ur, ut
+
+    ss = [i / n for i in range(n + 1)]
+    centre = [frame(s)[0] for s in ss]
+    body = thick(centre, [th(s) for s in ss])
+    p.glow(0, 0, 0.62, int(90 + 50 * wave(t, 1)), "light")
+    p.poly(body, "fill")
+    p.poly(body, "ink", 34, occlude=False)  # gilt wash over the whole body
+    # back (outer) is lit, belly (inner) in shadow: a band of brighter gilt
+    p.poly(thick([frame(s, 0.42)[0] for s in ss], [th(s) * 0.42 for s in ss]), "ink", 60, occlude=False)
+
+    N = 132  # scales along the body; the pattern scrolls 6 scales (one diamond) per loop
+    flow = 6 * t
+    # diamondback pattern along the spine
+    for k in range(N // 6 + 1):
+        s = (k * 6 + flow) / N
+        if not 0.03 < s < 0.93:
+            continue
+        L = 2.6 / N
+        q0, q1, q2, q3 = frame(s - L, 0.18)[0], frame(s, 0.62)[0], frame(s + L, 0.18)[0], frame(s, -0.26)[0]
+        p.poly([q0, q1, q2, q3], "ink", 105, occlude=False)
+        p.line([q0, q1, q2, q3], 0.8, "ink", 210, closed=True)
+    # overlapping scales: staggered rows of small arcs that open toward the head
+    for row in range(5):
+        off = -0.62 + 0.31 * row
+        for i in range(N):
+            s = (i + 0.5 * (row % 2) + flow) / N
+            if not 0.02 < s < 0.95:
+                continue
+            c, ur, ut = frame(s, off)
+            rs = th(s) * 0.17
+            arc = [(c[0] + ur[0] * rs * math.sin(f) + ut[0] * rs * 0.9 * math.cos(f),
+                    c[1] + ur[1] * rs * math.sin(f) + ut[1] * rs * 0.9 * math.cos(f))
+                   for f in (math.radians(d) for d in range(-90, 91, 30))]
+            p.line(arc, 0.7, "ink", 175)
+    # ventral plates across the belly
+    for i in range(N // 2):
+        s = (i * 2 + flow) / N
+        if not 0.02 < s < 0.92:
+            continue
+        p.line([frame(s, -0.98)[0], frame(s, -0.7)[0]], 0.8, "ink", 150)
+    # glossy highlight along the back
+    p.line([frame(s, 0.5)[0] for s in ss[6:int(n * 0.9)]], 2.0, "flare", 90)
+    p.line(body, 2.0, closed=True)
+
+    # the head, in profile, jaws gaping round its own tail
     ah = math.radians(95)
     hc = (R * math.cos(ah), R * math.sin(ah))
     ur = (math.cos(ah), math.sin(ah))
     ut = (-math.sin(ah), math.cos(ah))
     L = lambda u, w: (hc[0] + ut[0] * u + ur[0] * w, hc[1] + ut[1] * u + ur[1] * w)  # noqa: E731
-    head = [L(-0.15, 0.09), L(-0.02, 0.125), L(0.11, 0.105), L(0.2, 0.05), L(0.215, 0.022),
-            L(0.085, 0.004), L(0.19, -0.035), L(0.16, -0.065), L(0.03, -0.1), L(-0.15, -0.09)]
+    top = [L(-0.17, 0.058), L(-0.08, 0.094), L(0.0, 0.118), L(0.09, 0.113), L(0.17, 0.09), L(0.228, 0.06),
+           L(0.262, 0.034), L(0.256, 0.016)]
+    lip = [L(0.256, 0.016), L(0.17, 0.021), L(0.08, 0.017), L(0.02, 0.01), L(-0.02, 0.0)]
+    jaw = [L(-0.02, 0.0), L(0.07, -0.026), L(0.15, -0.045), L(0.205, -0.06), L(0.2, -0.076)]
+    chin = [L(0.2, -0.076), L(0.12, -0.094), L(0.02, -0.104), L(-0.08, -0.09), L(-0.17, -0.058)]
+    head = top + lip[1:] + jaw[1:] + chin[1:]
     p.poly(head, "fill")
-    p.line(head, 2.2, closed=True)
-    ex, ey = L(0.07, 0.05)
-    p.disc(ex, ey, 0.026, "accent", 255)
-    p.dot(ex, ey, 1.2, "fill", 255)
-    tongue = 0.03 * wave(t, 3)
-    p.line([L(0.215, 0.012), L(0.27 + tongue, 0.03), L(0.29 + tongue, 0.045)], 1.2, "accent", 220)
+    p.poly(head, "ink", 40, occlude=False)
+    p.poly(top + lip[1:], "ink", 30, occlude=False)  # crown catches a little more light
+    for c in (top, lip, jaw, chin):
+        p.line(c, 2.0)
+    deg = math.degrees(ah)
+    # dark mouth interior and fangs
+    mouth = lip[::-1] + jaw[1:]
+    p.poly(mouth, "accent", 60, occlude=False)
+    for fu, fl in ((0.215, 0.05), (0.17, 0.035)):
+        p.poly([L(fu - 0.014, 0.019), L(fu + 0.009, 0.019), L(fu - 0.004, 0.019 - fl)], "ink", occlude=False)
+    # fine scales over the crown and under the chin
+    for row, (w0, w1, u0, u1) in enumerate(((0.07, 0.1, -0.13, 0.06), (0.045, 0.07, -0.13, 0.02), (-0.06, -0.08, -0.13, 0.12))):
+        for k in range(10):
+            u = lerp(u0, u1, (k + 0.5 * (row % 2)) / 10)
+            w = lerp(w0, w1, (u - u0) / (u1 - u0))
+            p.arc(*L(u, w), 0.011, deg + 180 - 80, deg + 180 + 80, 0.6, "ink", 150)
+    # cranial plates and the heavy supraocular shield over the eye
+    p.line([L(0.13, 0.098), L(0.19, 0.08), L(0.24, 0.052)], 0.8, "ink", 170)
+    p.line([L(0.0, 0.114), L(0.03, 0.092), L(0.0, 0.07)], 0.7, "ink", 150)
+    shield = [L(0.075, 0.084), L(0.105, 0.106), L(0.15, 0.1), L(0.165, 0.082), L(0.12, 0.08)]
+    p.poly(shield, "fill")
+    p.poly(shield, "ink", 70, occlude=False)
+    p.line(shield, 1.2, closed=True)
+    # postocular stripe running back to the angle of the jaw
+    stripe = bezier((0.095, 0.058), (0.03, 0.05), (-0.06, 0.012), 16)
+    p.poly(thick([L(*q) for q in stripe], [lerp(0.022, 0.006, i / 16) for i in range(17)]), "ink", 120, occlude=False)
+    for k in range(7):  # labial scales along the upper lip
+        p.arc(*L(0.03 + 0.031 * k, 0.03), 0.015, deg + 90 - 75, deg + 90 + 75, 0.7, "ink", 170)
+    # jaw line, heat pit, nostril
+    p.line([L(-0.02, 0.0), L(-0.06, -0.025), L(-0.1, -0.05)], 0.9, "ink", 190)
+    p.dot(*L(0.19, 0.04), 1.3, "fill", 255)
+    p.dot(*L(0.238, 0.042), 1.6, "fill", 255)
+    # the eye: smaller, deep-set under the shield, slit pupil
+    ex, ey = L(0.122, 0.06)
+    p.disc(ex, ey, 0.022, "fill")
+    p.disc(ex, ey, 0.022, "accent", 235, occlude=False)
+    p.glow(ex, ey, 0.075, int(200 + 55 * wave(t, 2)))
+    with p.tf(dx=ex, dy=ey, rot=deg - 90):
+        slit = [(0.0042 * math.sin(a_), 0.02 * math.cos(a_)) for a_ in (TAU * j / 20 for j in range(20))]
+        p.poly(slit, "fill")
+    p.dot(*L(0.116, 0.068), 1.0, "accent", 255)
+    p.circle(ex, ey, 0.022, 0.9, "ink", 230)
     p.text("ΕΝ ΤΟ ΠΑΝ", 0, 0, 22, "serif_text", "ink", 235, upright=True)
 
 
@@ -240,8 +364,10 @@ def squared_circle(p, t, v):
     p.line(tri, 2.4, closed=True)
     r3 = r2 / 2
     p.ring(0, 0, r3, 2.4)
-    for x, y in sq + tri:
+    p.glow(0, 0, r3 * 1.4, int(150 + 70 * wave(t, 2)))
+    for k, (x, y) in enumerate(sq + tri):
         p.dot(x, y, 3.2, "accent")
+        p.sparkle(x, y, 0.09, int(140 + 100 * wave(t, 1, k / 7)), rot=45)
     p.text("☉", -0.12, 0.0, 22, "symbols", "ink", 255, upright=True)
     p.text("☽", 0.12, 0.0, 22, "symbols", "accent", 255, upright=True)
 
@@ -258,6 +384,7 @@ def monas(p, t, v):
         p.poly(thick(arc, ws), "ink")
         p.ring(0, 0.16, 0.27, 3.0)
         p.disc(0, 0.16, 0.05 * (1 + 0.3 * wave(t, 2)), "accent", 255, occlude=False)
+        p.glow(0, 0.16, 0.2, int(150 + 80 * wave(t, 2)))
         p.line([(0, -0.11), (0, -0.80)], 3.4)
         p.line([(-0.27, -0.40), (0.27, -0.40)], 3.4)
         p.arc(-0.12, -0.80, 0.12, 0, 180, 3.0)
@@ -289,12 +416,15 @@ def tree_of_life(p, t, v):
     frac = [x / lens[-1] for x in lens]
     if u <= 1:
         p.line(sub_path(flash, max(0, u - 0.14), u, 30), 3.2, "accent", 255)
+        p.line(sub_path(flash, max(0, u - 0.14), u, 30), 9.0, "flare", 200)
+        p.sparkle(*path_point(flash, u), 0.12, 255, rot=45 * u)
     letters = "אבגדהוזחטי"
     for i, (x, y) in enumerate(pos):
         p.ring(x, y, 0.088, 2.2)
         lit = math.exp(-(u - frac[i]) * 9) if u >= frac[i] else 0.0
         if lit > 0.02:
             p.circle(x, y, 0.088, 3.4, "accent", int(255 * lit))
+            p.glow(x, y, 0.22, int(230 * lit))
         p.text(letters[i], x, y, 13, "hebrew", "ink", 255, upright=True)
 
 
@@ -333,6 +463,7 @@ def sri_yantra(p, t, v):
         if g > 0.85:
             p.line(tri, 2.2, "accent", int(255 * (g - 0.85) / 0.15), closed=True)
     p.disc(0, 0.02, 0.022 * (1 + 0.5 * wave(t, 2)), "accent", 255, occlude=False)
+    p.glow(0, 0.02, 0.16, int(170 + 85 * wave(t, 2)))
 
 
 @sigil("flower_of_life", "The Flower of Life", "Sacred Geometry", 6,
@@ -354,6 +485,7 @@ def flower_of_life(p, t, v):
                 centres.append((lerp(a0[0], a1[0], j / ring), lerp(a0[1], a1[1], j / ring)))
     rot = 60 * t
     outer = r * (rings + 1)
+    p.glow(0, 0, outer * 0.9, int(80 + 60 * (1 - k)), "light")
     p.circle(0, 0, outer, 2.6)
     p.circle(0, 0, outer + 0.04, 1.0, "ink", 170)
     with p.tf(rot=rot):
@@ -379,6 +511,7 @@ def metatron(p, t, v):
         g = wave(t, 1, -i / 13)
         if g > 0.8:
             p.circle(x, y, r * 0.6, 1.6, "accent", int(255 * (g - 0.8) / 0.2))
+            p.glow(x, y, r * 1.6, int(220 * (g - 0.8) / 0.2))
     cube = [(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)]
     p.disc(0, 0, r, "fill")
     wireframe(p, cube, edges_by_length(cube), TAU * t, 0.62, 0.0, 0.075, 1.6)
@@ -406,6 +539,9 @@ def platonic(p, t, v):
     p.circle(0, 0, 0.98, 1.4, "ink", 150)
     p.circle(0, 0, 0.98, 6.0, "faint", 120)
     ry, rx, rz = TAU * t, 0.45, 0.25 * math.sin(TAU * t)
+    p.glow(0, 0, 0.75, int(110 + 50 * wave(t, 2)), "light")
+    for i in range(12):
+        p.ray(0, 0, i * 30 + 15, 0.25, 0.95, 0.02, 0.1, int(90 + 60 * wave(t, 1, -i / 12)))
     if var == "Star Tetrahedron":
         a = [(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)]
         b = [(-x, -y, -z) for x, y, z in a]
@@ -432,8 +568,12 @@ def solomon(p, t, v):
     p.line(dn, 4.4, "faint", 255, closed=True)
     p.line(up, 2.4, "ink", 255, closed=True)
     p.line(dn, 2.4, "accent", 230, closed=True)
+    p.glow(0, 0, 0.9, 110, "light")
+    for k, q in enumerate(up + dn):
+        p.sparkle(*q, 0.1, int(140 + 115 * wave(t, 1, k / 6)), rot=60 * t)
     p.disc(0, 0, 0.26, "fill")
     p.circle(0, 0, 0.26, 1.4, "ink", 200)
+    p.glow(0, 0, 0.3, int(120 + 60 * wave(t, 2)))
     p.text("יהוה", 0, 0.0, 24, "hebrew", "ink", 255, upright=True)
 
 
@@ -462,8 +602,10 @@ def horus(p, t, v):
         spiral = [polar(lerp(0.16, 0.035, i / 50), 90 - 450 * i / 50, *C) for i in range(51)]
         path = lead + spiral[1:]
         p.poly(thick(path, [lerp(0.055, 0.025, i / len(path)) for i in range(len(path))]), "ink")
+        p.glow(lx, 0.07, 0.3, int(130 + 60 * wave(t, 2)))
         spark = path_point(drop + path[::-1], t)
         p.dot(*spark, 3.2, "accent", int(255 * wave(t, 2)))
+        p.sparkle(*spark, 0.09, int(255 * wave(t, 2)), rot=90 * t)
 
 
 @sigil("ankh", "The Ankh beneath the Aten", "Egyptian Mysteries", 6,
@@ -474,11 +616,13 @@ def ankh(p, t, v):
     for i in range(11):
         a = 205 + i * 13
         end = polar(1.15, a, *sun)
-        p.line([polar(0.12, a, *sun), end], 1.4, "ink", 170)
+        p.ray(*sun, a, 0.1, 1.2, 0.025, 0.1, int(230 * (0.55 + 0.45 * wave(t, 1, -i / 11))))
+        p.line([polar(0.14, a, *sun), end], 0.7, "ink", 120)
         p.disc(*end, 0.025, "ink", 200, occlude=False)
         for k in range(3):
             u = ((k + t) / 3)
-            p.dot(*polar(lerp(0.15, 1.1, u), a, *sun), 1.8, "accent", int(255 * math.sin(math.pi * u)))
+            p.sparkle(*polar(lerp(0.15, 1.1, u), a, *sun), 0.045, int(255 * math.sin(math.pi * u)))
+    p.glow(*sun, 0.42, 255, "light")
     p.disc(*sun, 0.1, "ink", occlude=False)
     p.circle(*sun, 0.13, 1.4, "accent", 200)
     loop = [(0.25 * math.cos(a), 0.47 + 0.33 * math.sin(a)) for a in (TAU * i / 120 for i in range(121))]
@@ -553,8 +697,10 @@ def caduceus(p, t, v):
         p.dot(x - side * 0.08, y + 0.09, 1.6, "accent")
         u = (t + (0.5 if side > 0 else 0)) % 1
         p.dot(*path_point(pts, u), 3.0, "accent", int(255 * math.sin(math.pi * u)))
+    p.glow(0, 0.68, 0.3, 200, "light")
     p.ring(0, 0.68, 0.075, 2.0)
     p.disc(0, 0.68, 0.035 * (1 + 0.3 * wave(t, 2)), "accent", 255, occlude=False)
+    p.glow(0, 0.68, 0.09, int(180 + 75 * wave(t, 2)))
 
 
 @sigil("rose_cross", "The Rose Cross", "Rosicrucianism", 6,
@@ -562,6 +708,10 @@ def caduceus(p, t, v):
        rings=("Hebrew Alphabet", "Zodiac", "Alchemical Elements", "Emerald Tablet"))
 def rose_cross(p, t, v):
     cy = 0.2
+    for i in range(24):
+        long = i % 2 == 0
+        p.ray(0, cy, 90 + 15 * i, 0.3, (1.15 if long else 0.85) + 0.08 * wave(t, 2, i * 0.3), 0.025, 0.12 if long else 0.07,
+              int(120 + 100 * wave(t, 1, -i / 24)))
     ends = [((0, 0.86), (0, 1)), ((0, -0.98), (0, -1)), ((-0.78, cy), (-1, 0)), ((0.78, cy), (1, 0))]
     for (x, y), (dx, dy) in ends:
         for ox, oy in ((dx * 0.07, dy * 0.07), (-dy * 0.08, dx * 0.08), (dy * 0.08, -dx * 0.08)):
@@ -574,17 +724,46 @@ def rose_cross(p, t, v):
         p.line(b, 2.2, closed=True)
         p.line([(lerp(b[0][0], b[2][0], 0.5), b[0][1]), (lerp(b[0][0], b[2][0], 0.5), b[2][1])] if b is bars[0]
                else [(b[0][0], cy), (b[1][0], cy)], 1.0, "accent", 140)
-    for count, r0, r1, spin in ((12, 0.17, 0.4, 30 * t), (7, 0.1, 0.29, -360 / 7 * t), (3, 0.03, 0.18, 120 * t)):
-        for i in range(count):
-            a = 90 + spin + 360 * i / count + (180 / count if count == 7 else 0)
-            L = r1 - r0
-            hw = min(0.5 * L, math.radians(360 / count) * r1 * 0.62)
-            with p.tf(dx=0, dy=cy, rot=a):
-                pts = [(r0 + L / 2 + L / 2 * math.cos(s), hw * math.sin(s)) for s in (TAU * j / 40 for j in range(40))]
-                p.poly(pts, "fill")
-                p.poly(pts, "accent", 70, occlude=False)
-                p.line(pts, 1.6, closed=True)
-    p.disc(0, cy, 0.05, "accent", 255)
+    bloom = 1 + 0.03 * math.sin(TAU * t)
+    with p.tf(dy=cy, s=bloom):
+        for i in range(5):  # sepals behind the flower
+            a_ = 90 + 72 * i + 36 + 6 * t * 0
+            sep = [polar(0.18, a_ - 14), polar(0.36, a_ - 6), polar(0.47, a_), polar(0.36, a_ + 6), polar(0.18, a_ + 14)]
+            p.poly(sep, "fill")
+            p.poly(sep, "ink", 60, occlude=False)
+            p.line(sep, 1.3, closed=True)
+            p.line([polar(0.2, a_), polar(0.42, a_)], 0.6, "ink", 160)
+
+        def petal(r0, r1, a_, half, tint):
+            """A broad, cupped rose petal: narrow claw, wide rounded blade with a
+            shallow notch, a rolled (lit) outer edge and a darker throat."""
+            pts = []
+            for k in range(21):
+                f = k / 20
+                ang = a_ - half + 2 * half * f
+                notch = 0.035 * (r1 - r0) * math.exp(-((f - 0.5) / 0.08) ** 2)
+                pts.append(polar(r1 - notch - (r1 - r0) * 0.12 * (2 * abs(f - 0.5)) ** 2, ang))
+            base = [polar(r0, a_ + half * 0.25), polar(r0, a_ - half * 0.25)]
+            shape = pts + base
+            p.poly(shape, "fill")
+            p.poly(shape, "accent", tint, occlude=False)
+            throat = [polar(r0 + (r1 - r0) * 0.45, a_ - half * 0.55 + half * 1.1 * k / 10) for k in range(11)] + base
+            p.poly(throat, "fill", 120, occlude=False)
+            p.line(shape, 1.4, closed=True)
+            p.line([polar(r1 - (r1 - r0) * 0.1, a_ - half * 0.8 + half * 1.6 * k / 12) for k in range(13)], 1.6, "flare", 120)
+
+        for count, r0, r1, spin, tint in ((12, 0.12, 0.4, 30 * t, 95), (7, 0.07, 0.3, -360 / 7 * t, 120), (3, 0.03, 0.2, 120 * t, 150)):
+            half = 360 / count * 0.62
+            for i in range(count):
+                petal(r0, r1, 90 + spin + 360 * i / count + (180 / count if count == 7 else 0), half, tint)
+        # a spiralling, tightly furled bud at the heart
+        bud = [polar(0.11 * (k / 80) ** 0.9, 90 + 720 * (k / 80) + 120 * t) for k in range(81)]
+        p.disc(0, 0, 0.11, "fill")
+        p.disc(0, 0, 0.11, "accent", 170, occlude=False)
+        p.line(bud, 1.6)
+        p.line([polar(0.11 * (k / 80) ** 0.9 + 0.006, 90 + 720 * (k / 80) + 120 * t) for k in range(10, 81)], 1.2, "flare", 150)
+        p.circle(0, 0, 0.11, 1.2)
+    p.glow(0, cy, 0.22, int(150 + 80 * wave(t, 2)))
 
 
 TRIGRAMS = [(1, 1, 1), (0, 1, 1), (0, 1, 0), (0, 0, 1), (0, 0, 0), (1, 0, 0), (1, 0, 1), (1, 1, 0)]
@@ -624,7 +803,10 @@ def taiji(p, t, v):
        "The eight-spoked wheel set turning in the deer park at Sarnath: the Noble Eightfold Path rolling through the world",
        rings=("Om Mani Padme Hum",))
 def dharmachakra(p, t, v):
+    p.glow(0, 0, 0.9, 120, "light")
     with p.tf(rot=-45 * t):
+        for i in range(8):
+            p.ray(0, 0, 45 * i, 0.2, 1.55, 0.04, 0.26, int(150 + 80 * wave(t, 1, -i / 8)))
         for i in range(8):
             a = 22.5 + 45 * i
             p.line([polar(0.8, a), polar(0.9, a)], 2.4)
@@ -641,6 +823,7 @@ def dharmachakra(p, t, v):
                 p.line(sp, 1.8, closed=True)
                 p.line([(0.2, 0), (0.66, 0)], 1.0, "accent", 140)
         p.ring(0, 0, 0.19, 2.2)
+    p.glow(0, 0, 0.22, int(170 + 70 * wave(t, 2)))
     with p.tf(rot=120 * t):
         for i in range(3):
             with p.tf(rot=120 * i):
@@ -664,6 +847,8 @@ def pentalpha(p, t, v):
         w = max(0.8, 2.6 * min(1.0, r / 0.5) ** 0.3)
         p.line(star, w, "ink", int(255 * fade), closed=True)
         p.circle(0, 0, r, 1.0, "ink", int(120 * fade))
+    p.glow(0, 0, 0.32, int(200 + 55 * wave(t, 2)))
+    p.sparkle(0, 0, 0.12, 255, rot=36 * t)
     p.circle(0, 0, 1.02, 2.4)
     for i, ch in enumerate("ΥΓΙΘΑ"):
         a = 90 - 72 * i
@@ -688,6 +873,7 @@ def athanor(p, t, v):
         fl = bezier((x - 0.05, -0.62), (x - 0.02, -0.62 + h * 0.6), (x + 0.02 * math.sin(TAU * (t + i * 0.2)), -0.62 + h), 10)
         fl += bezier(fl[-1], (x + 0.03, -0.62 + h * 0.5), (x + 0.05, -0.62), 10)[1:]
         p.poly(fl, "accent", 200, occlude=False)
+    p.glow(0, -0.56, 0.42, int(170 + 60 * wave(t, 3)))
     cy, rx, ry = -0.05, 0.4, 0.5
     egg = [(rx * math.sin(s) * (1 - 0.14 * math.cos(s)), cy + ry * math.cos(s))
            for s in (TAU * i / 160 for i in range(160))]
@@ -744,6 +930,7 @@ def tetractys(p, t, v):
         lit *= smooth(i, i + 0.6, cur) if cur < 11 else 1.0
         if lit > 0:
             p.disc(x, y, 0.05, "accent", int(255 * lit), occlude=False)
+            p.glow(x, y, 0.16, int(200 * lit))
 
 
 @sigil("triskele", "The Triple Spiral", "Celtic Mysteries", 5,
@@ -767,11 +954,13 @@ def triskele(p, t, v):
             ntan = math.radians(nxt_a0 + 90)
             link = bezier3(end, (end[0] + 0.45 * math.cos(tan), end[1] + 0.45 * math.sin(tan)),
                            (nxt_end[0] + 0.45 * math.cos(ntan), nxt_end[1] + 0.45 * math.sin(ntan)), nxt_end, 40)
+            p.line(sp, 12.0, "flare", 70)
             p.line(sp, 4.2, "ink", 255)
             p.line(link, 4.2, "ink", 255)
             p.line(sp, 1.2, "fill", 255)
         for i in range(3):
             p.disc(*polar(0.36, 90 + 120 * i), 0.03 * (1 + 0.4 * wave(t, 1, i / 3)), "accent", 255, occlude=False)
+            p.glow(*polar(0.36, 90 + 120 * i), 0.16, int(150 + 90 * wave(t, 1, i / 3)))
 
 
 @sigil("enneagram", "The Enneagram", "Fourth Way", 4,
@@ -780,6 +969,9 @@ def triskele(p, t, v):
 def enneagram(p, t, v):
     R = 0.82
     pt = {k: polar(R, 90 - 40 * (k % 9)) for k in range(1, 10)}
+    p.glow(0, 0, R * 0.9, 90, "light")
+    for k in range(9):
+        p.line([(0, 0), polar(R, 90 - 40 * k)], 0.6, "faint", 200)
     p.circle(0, 0, R, 2.4)
     tri = [pt[3], pt[6], pt[9]]
     p.line(tri, 2.2, "ink", 255, closed=True)
@@ -788,10 +980,15 @@ def enneagram(p, t, v):
     loop = hexad + [hexad[0]]
     p.line(sub_path(loop, max(0, t - 0.08), t, 16), 3.2, "accent", 255)
     p.dot(*path_point(loop, t), 3.4, "accent")
+    p.sparkle(*path_point(loop, t), 0.1, 230, rot=360 * t)
     tl = tri + [tri[0]]
     p.dot(*path_point(tl, (t * 2) % 1), 2.8, "accent", 220)
+    order = [1, 4, 2, 8, 5, 7]
     for k in range(1, 10):
         x, y = pt[k]
+        if k in order:
+            d = (t * 6 - order.index(k)) % 6
+            p.glow(x, y, 0.16, int(230 * max(0.0, 1 - d / 1.5)))
         p.ring(x, y, 0.045, 1.8)
         p.text(str(k), *polar(R + 0.13, 90 - 40 * (k % 9)), 14, "serif_text", "ink", 255, upright=True)
 
@@ -806,10 +1003,11 @@ def coniunctio(p, t, v):
     a = 90 - 360 * t
     sx, sy = polar(R, a)
     with p.tf(dx=sx, dy=sy, rot=-90 * t):
+        p.glow(0, 0, 0.42, 230, "light")
         for i in range(16):
             ang = i * 22.5
             if i % 2:
-                p.line([polar(0.2, ang), polar(0.31, ang)], 2.0)
+                p.ray(0, 0, ang, 0.15, 0.48 + 0.06 * wave(t, 3, i * 0.13), 0.04, 0.09, 235)
             else:
                 wv = [polar(lerp(0.2, 0.34, k / 12), ang + 6 * math.sin(k / 12 * TAU)) for k in range(13)]
                 p.line(wv, 1.4, "ink", 220)
@@ -860,8 +1058,10 @@ def kundalini(p, t, v):
         lit = math.exp(-(e - y) * 4) if e >= y else 0.0
         if lit > 0.03:
             p.disc(0, y, rr * 0.32, "accent", int(255 * lit), occlude=False)
+            p.glow(0, y, rr * 1.6, int(220 * lit))
     if -0.98 < e < 0.98:
         p.dot(0, e, 3.6, "accent", 255)
+        p.sparkle(0, e, 0.14, 255, rot=90 * t)
 
 
 ZODIAC = "♈♉♊♋♌♍♎♏♐♑♒♓"
@@ -899,6 +1099,7 @@ def astrolabe(p, t, v):
             flame = [polar(r + 0.04, a + 12), polar(r - 0.05, a + 5), tip]
             p.poly(flame, "ink", 255, occlude=False)
             p.dot(*tip, 2.0, "accent")
+            p.sparkle(*tip, 0.06, 200, rot=45)
     with p.tf(rot=180 * t):
         rule = [(-0.98, -0.035), (0.98, -0.035), (0.98, 0.035), (-0.98, 0.035)]
         p.poly(rule, "fill")
@@ -924,6 +1125,11 @@ def valknut(p, t, v):
         loop = mid + [mid[0]]
         u = (t + i / 3) % 1
         p.line(sub_path(loop, max(0.0, u - 0.07), u, 12), 2.6, "accent", 230)
+    corners = [q for i in range(3) for q in ngon(3, r, 90, *polar(0.3, 270 + 120 * i, 0, 0.06))]
+    for j, q in enumerate(corners):
+        lit = max(0.0, 1 - min((t * 9 - j) % 9, (j - t * 9) % 9) / 1.5)
+        p.sparkle(*q, 0.08 + 0.08 * lit, int(110 + 145 * lit), rot=30 * lit)
+    p.glow(0, 0.06, 0.55, 120, "light")
     p.circle(0, 0, 1.0, 1.6, "ink", 200)
     for i in range(24):
         p.dot(*polar(1.0, 15 * i + 15 * t), 1.6, "accent", 200)
@@ -937,9 +1143,8 @@ def giza(p, t, v):
     hy = -0.42
     for k, (x, y, s) in enumerate(((-0.2, 0.66, 1.0), (0.24, 0.73, 0.82), (0.55, 0.8, 0.7))):
         tw = wave(t, 2, k * 0.33)
-        p.poly([(x, y + 0.07 * s), (x + 0.015, y + 0.015), (x + 0.07 * s, y), (x + 0.015, y - 0.015),
-                (x, y - 0.07 * s), (x - 0.015, y - 0.015), (x - 0.07 * s, y), (x - 0.015, y + 0.015)],
-               "accent", int(140 + 115 * tw), occlude=False)
+        p.sparkle(x, y, 0.13 * s * (0.8 + 0.3 * tw), int(170 + 85 * tw), rot=10 * tw)
+        p.dot(x, y, 2.2 * s, "accent", 255)
     crescent(p, -0.6, 0.48, 0.09, 30, 0.55, "ink")
     pyr = [(0.62, 0.28, 0.24, -0.36), (0.25, 0.42, 0.44, -0.39), (-0.32, 0.56, 0.58, -0.44)]
     for cx, hw, h, by in pyr:
@@ -960,8 +1165,10 @@ def giza(p, t, v):
     big = pyr[2]
     ap = (big[0], big[3] + big[2])
     beam = wave(t, 1)
-    p.line([ap, (ap[0], 0.97)], 2.0, "faint", int(255 * beam))
-    p.disc(*ap, 0.035 * (0.6 + 0.6 * beam), "accent", 255, occlude=False)
+    p.ray(*ap, 90, 0.02, 1.25, 0.03, 0.34, int(120 + 135 * beam))
+    p.ray(*ap, 90, 0.02, 1.4, 0.012, 0.08, int(160 + 95 * beam))
+    p.glow(*ap, 0.12 + 0.05 * beam, 255)
+    p.disc(*ap, 0.03, "accent", 255, occlude=False)
     p.line([(-0.92, hy), (0.92, hy)], 2.0)
     for r, y in enumerate((-0.55, -0.67, -0.79)):
         hwid = math.sqrt(max(0.0, 0.98 ** 2 - y * y)) - 0.04
@@ -994,26 +1201,60 @@ def eleusis(p, t, v):
             flame = bezier3((x - 0.1 * sc, 0.2), (x - 0.12 * sc, 0.32 * sc + 0.2), (tip[0] - 0.04, tip[1] - 0.15 * sc), tip, 16) + \
                 bezier3(tip, (tip[0] + 0.03, tip[1] - 0.2 * sc), (x + 0.13 * sc, 0.3 * sc + 0.2), (x + 0.1 * sc, 0.2), 16)[1:]
             p.poly(flame, layer, vv, occlude=False)
-    sway = 3 * math.sin(TAU * t)
+        p.glow(x, 0.4, 0.3, int(190 + 65 * wave(t, 3, side * 0.2)))
+    sway = 2.5 * math.sin(TAU * t)
+    p.glow(0.03, 0.42, 0.42, int(110 + 50 * wave(t, 3)), "light")
     with p.tf(dy=-0.95, rot=sway):
-        stalk = bezier((0, 0), (0.03, 0.8), (0, 1.62), 30)
-        p.line(stalk, 2.4)
-        for side in (-1, 1):
-            leaf = bezier((0, 0.25), (side * 0.32, 0.55), (side * 0.36, 1.0), 20)
-            p.poly(thick(leaf, [0.07 * math.sin(math.pi * i / 20) + 0.005 for i in range(21)]), "fill")
-            p.line(thick(leaf, [0.07 * math.sin(math.pi * i / 20) + 0.005 for i in range(21)]), 1.4, closed=True)
-        for j in range(9):
-            y = 0.92 + j * 0.085
-            sc = 1 - j * 0.06
-            for side in (-1, 1):
-                with p.tf(dx=side * 0.045 * sc, dy=y, rot=-side * 28):
-                    g = [(0.055 * sc * math.cos(a), 0.1 * sc * math.sin(a)) for a in (TAU * k / 24 for k in range(24))]
+        # culm with two nodes
+        stalk = bezier3((0, 0), (0.0, 0.5), (0.04, 0.9), (0.03, 1.2), 40)
+        p.poly(thick(stalk, [lerp(0.03, 0.018, i / 40) for i in range(41)]), "fill")
+        p.poly(thick(stalk, [lerp(0.03, 0.018, i / 40) for i in range(41)]), "ink", 50, occlude=False)
+        p.line(thick(stalk, [lerp(0.03, 0.018, i / 40) for i in range(41)]), 1.2, closed=True)
+        for nu in (0.32, 0.62):
+            q = path_point(stalk, nu)
+            p.line([(q[0] - 0.022, q[1]), (q[0] + 0.022, q[1] + 0.008)], 1.6, "ink", 230)
+        # lanceolate leaves curling away from the nodes
+        for side, nu, reach, droop in ((-1, 0.32, 0.5, 0.25), (1, 0.62, 0.42, 0.2), (1, 0.12, 0.36, 0.3)):
+            b0 = path_point(stalk, nu)
+            leaf = bezier3(b0, (b0[0] + side * 0.05, b0[1] + 0.25), (b0[0] + side * reach * 0.8, b0[1] + 0.42),
+                           (b0[0] + side * reach, b0[1] + 0.3 - droop + 0.02 * math.sin(TAU * t + side)), 30)
+            w_ = [0.055 * math.sin(math.pi * min(1.0, (i / 30) * 1.15)) ** 0.7 + 0.002 for i in range(31)]
+            lp = thick(leaf, w_)
+            p.poly(lp, "fill")
+            p.poly(lp, "ink", 45, occlude=False)
+            p.line(lp, 1.1, closed=True)
+            p.line(leaf[2:-3], 0.6, "ink", 170)
+        # the ear: rachis nodding slightly, spikelets in two alternating rows
+        rach = bezier3((0.03, 1.18), (0.035, 1.4), (0.06, 1.6), (0.1, 1.78), 30)
+        spikes = []
+        for j in range(13):
+            u = j / 12
+            q = path_point(rach, 0.02 + 0.92 * u)
+            q2 = path_point(rach, min(1.0, 0.02 + 0.92 * u + 0.02))
+            ang = math.degrees(math.atan2(q2[1] - q[1], q2[0] - q[0]))
+            side = 1 if j % 2 else -1
+            size = 0.105 * (1 - 0.45 * u) + 0.02
+            spikes.append((q, ang, side, size, u))
+        # awns first (behind): long, fine, curving outward and up
+        for q, ang, side, size, u in spikes:
+            a_ = ang - 90 + side * (-28)
+            tip = polar(size * 0.95, a_ + 90, *q)
+            L_ = 0.2 + 0.3 * math.sin(math.pi * (0.25 + 0.7 * u))
+            flutter = 3 * math.sin(TAU * (t * 2 + u))
+            aw = bezier(tip, polar(L_ * 0.5, a_ + 90 - side * 3, *tip), polar(L_, a_ + 90 - side * (9 + flutter), *tip), 12)
+            p.line(aw, 0.7, "ink", 200)
+        for q, ang, side, size, u in spikes:
+            a_ = ang - 90 + side * (-28)
+            with p.tf(dx=q[0], dy=q[1], rot=a_):
+                for dx_, sc in ((side * 0.012, 0.9), (0.0, 1.0)):  # two florets per spikelet
+                    g = [(dx_ + size * 0.36 * sc * math.sin(math.pi * h_) ** 0.75 * (1 - 0.3 * h_), size * sc * h_) for h_ in (i_ / 20 for i_ in range(21))] + \
+                        [(dx_ - size * 0.36 * sc * math.sin(math.pi * h_) ** 0.75 * (1 - 0.3 * h_), size * sc * h_) for h_ in (i_ / 20 for i_ in range(20, -1, -1))]
                     p.poly(g, "fill")
-                    p.line(g, 1.5, closed=True)
-                    p.line([(0, 0.1 * sc), (0.01, 0.32 * sc)], 1.0, "ink", 200)
-        g = [(0.05 * math.cos(a), 1.72 + 0.09 * math.sin(a)) for a in (TAU * k / 24 for k in range(24))]
-        p.poly(g, "fill")
-        p.line(g, 1.5, closed=True)
+                    p.poly(g, "ink", 70, occlude=False)
+                    p.line(g, 1.1, closed=True)
+                    p.line([(dx_, size * sc * 0.15), (dx_ + size * 0.04, size * sc * 0.85)], 0.6, "ink", 170)
+        p.line(rach, 1.4, "ink", 220)
+        p.sparkle(*path_point(rach, 1.0), 0.06, int(150 + 100 * wave(t, 2)))
 
 
 @sigil("orphic_egg", "The Orphic Egg", "Orphic Mysteries", 5,
@@ -1047,6 +1288,7 @@ def orphic_egg(p, t, v):
         p.line([(h * math.cos(a), y + 0.04 * math.sin(a)) for a in (math.pi * j / 30 for j in range(31))], 1.0, "faint", 255)
     p.line(egg, 2.8, closed=True)
     p.disc(0, cy, 0.05 * (1 + 0.5 * wave(t, 2)), "accent", 200, occlude=False)
+    p.glow(0, cy, 0.3, int(120 + 70 * wave(t, 2)))
     for front, run, w in runs:
         if front:
             serpent_run(p, run, w)

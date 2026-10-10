@@ -1,8 +1,13 @@
 {
   "name": "Plate XXV: The Orphic Egg",
-  "description": "The cosmic egg of the Orphics with the serpent of creation coiled about it, from which Phanes, the first-born light, broke forth. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/25.gif",
+  "description": "The cosmic egg of the Orphics with the serpent of creation coiled about it, from which Phanes, the first-born light, broke forth. Struck in Rubedo: the reddening, the last stage, the Stone made perfect. Degree of Initiate, rank 371 of the folio. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/25.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/25.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Initiate"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Orphic Egg"

@@ -1,8 +1,13 @@
 {
   "name": "Plate LIV: The Flower of Life",
-  "description": "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold. Struck in Nigredo: the blackening, where every matter is first dissolved. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/54.gif",
+  "description": "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold. Struck in Nigredo: the blackening, where every matter is first dissolved. Degree of Initiate, rank 248 of the folio. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/54.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/54.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Initiate"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Flower of Life"

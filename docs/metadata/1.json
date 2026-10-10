@@ -1,8 +1,13 @@
 {
   "name": "Plate I: The Squaring of the Circle",
-  "description": "Make of man and woman a circle, then a square, then a triangle, then a circle, and you will have the Stone (Maier, Atalanta Fugiens, Emblem XXI). Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/1.gif",
+  "description": "Make of man and woman a circle, then a square, then a triangle, then a circle, and you will have the Stone (Maier, Atalanta Fugiens, Emblem XXI). Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. Degree of Neophyte, rank 398 of the folio. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/1.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/1.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Neophyte"
+    },
     {
       "trait_type": "Mystery",
       "value": "The Squaring of the Circle"

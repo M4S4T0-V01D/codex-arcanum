@@ -1,8 +1,13 @@
 {
   "name": "Plate L: Metatron's Cube",
-  "description": "Thirteen circles of the Fruit of Life joined by seventy-eight lines, within which every Platonic solid lies hidden. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
-  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/50.gif",
+  "description": "Thirteen circles of the Fruit of Life joined by seventy-eight lines, within which every Platonic solid lies hidden. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. Degree of Adept, rank 128 of the folio. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/poster/50.jpg",
+  "animation_url": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/50.mp4",
   "attributes": [
+    {
+      "trait_type": "Degree",
+      "value": "Adept"
+    },
     {
       "trait_type": "Mystery",
       "value": "Metatron's Cube"

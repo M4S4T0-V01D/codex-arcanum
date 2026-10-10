@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXXII: The Caduceus of Hermes",
+  "description": "The winged staff of Hermes Trismegistus about which two serpents twine: the opposing currents reconciled. Struck in Albedo: the whitening, the lunar washing of the matter.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/32.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Caduceus of Hermes"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Hermeticism"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Albedo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "None"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

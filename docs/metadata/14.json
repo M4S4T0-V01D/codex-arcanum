@@ -1,0 +1,35 @@
+{
+  "name": "Plate XIV: The Eleusinian Ear of Grain",
+  "description": "An ear of wheat reaped in silence between the torches of Demeter and Persephone: the final revelation of Eleusis. Struck in Albedo: the whitening, the lunar washing of the matter. “NOSCE TE IPSVM”: Know thyself.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/14.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Eleusinian Ear of Grain"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Eleusinian Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Albedo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Sacred Lattice"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Planetary Metals"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "NOSCE TE IPSVM"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXXVI: The Pentalpha",
+  "description": "The pentagram of the Pythagoreans, sign of Hygieia, whose heart holds a smaller star, and that one another, without end. Struck in Vermilion: cinnabar, the red sulphide of mercury. “ORA LEGE LEGE LEGE RELEGE LABORA ET INVENIES”: Pray, read, read, read, reread, work, and you will find (Mutus Liber).",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/36.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Pentalpha"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Pythagoreanism"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Vermilion"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Greek Alphabet"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Lancet Arch"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ORA LEGE LEGE LEGE RELEGE LABORA ET INVENIES"
+    }
+  ]
+}

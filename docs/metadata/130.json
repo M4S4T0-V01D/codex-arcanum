@@ -1,0 +1,39 @@
+{
+  "name": "Plate CXXX: The Flower of Life",
+  "description": "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold. Struck in Tyrian Purple: the dye of emperors and hierophants.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/130.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Flower of Life"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Sacred Geometry"
+    },
+    {
+      "trait_type": "Form",
+      "value": "Seed"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Tyrian Purple"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Rays of Glory"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Bare"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

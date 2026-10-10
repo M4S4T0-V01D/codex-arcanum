@@ -1,0 +1,35 @@
+{
+  "name": "Plate XVI: The Triple Spiral",
+  "description": "Three spirals in one unbroken line, carved at the entrance stone of Newgrange five thousand years ago. Struck in Folio: iron-gall ink on rag paper, as the old plates were printed.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/16.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Triple Spiral"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Celtic Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Folio"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "None"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Ogham"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

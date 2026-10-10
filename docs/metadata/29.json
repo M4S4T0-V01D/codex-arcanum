@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXIX: The Philosophical Egg",
+  "description": "The sealed Vas Hermeticum upon the athanor's slow fire, in which the matter is dissolved, putrefied and reborn. Struck in Viriditas: the greening power, the colour of the Emerald Tablet. “ΓΝΩΘΙ ΣΕΑΥΤΟΝ”: Know thyself (the Delphic maxim).",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/29.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Philosophical Egg"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "European Alchemy"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Viriditas"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Planetary Metals"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ΓΝΩΘΙ ΣΕΑΥΤΟΝ"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Plate L: Metatron's Cube",
+  "description": "Thirteen circles of the Fruit of Life joined by seventy-eight lines, within which every Platonic solid lies hidden. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. “OBSCVRVM PER OBSCVRIVS”: The obscure by the more obscure.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/50.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "Metatron's Cube"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Sacred Geometry"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Lapis Lazuli"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Bare"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "OBSCVRVM PER OBSCVRIVS"
+    }
+  ]
+}

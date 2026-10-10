@@ -1,0 +1,35 @@
+{
+  "name": "Plate XIX: The Orphic Egg",
+  "description": "The cosmic egg of the Orphics with the serpent of creation coiled about it, from which Phanes, the first-born light, broke forth. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. “ΕΝ ΤΟ ΠΑΝ”: One is the All.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/19.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Orphic Egg"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Orphic Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Lapis Lazuli"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "None"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Lancet Arch"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ΕΝ ΤΟ ΠΑΝ"
+    }
+  ]
+}

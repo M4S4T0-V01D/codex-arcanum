@@ -1,0 +1,35 @@
+{
+  "name": "Plate XV: The Valknut",
+  "description": "Three triangles knotted together, carved on the picture stones beside Odin and the fallen: the knot of the slain. Struck in Tyrian Purple: the dye of emperors and hierophants. “ΕΝ ΤΟ ΠΑΝ”: One is the All.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/15.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Valknut"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Norse Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Tyrian Purple"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Nimbus"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Hieroglyphs"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ΕΝ ΤΟ ΠΑΝ"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXXIV: The Philosophical Egg",
+  "description": "The sealed Vas Hermeticum upon the athanor's slow fire, in which the matter is dissolved, putrefied and reborn. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/34.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Philosophical Egg"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "European Alchemy"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Lapis Lazuli"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "None"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

@@ -1,0 +1,1064 @@
+"""The central figures. Each one draws itself at loop phase t in [0, 1) and
+must be seamless (state at t=1 == state at t=0): rotations are multiples
+of the figure's symmetry angle, oscillations use integer frequencies."""
+import math
+
+from .pen import (TAU, bezier, bezier3, lerp, ngon, path_point, polar, smooth,
+                  sub_path, thick, wave)
+
+SIGILS = {}
+
+
+def sigil(key, name, tradition, weight, lore, variants=None, rings=()):
+    def deco(fn):
+        SIGILS[key] = dict(key=key, name=name, tradition=tradition, weight=weight,
+                           lore=lore, variants=variants or [], rings=rings, fn=fn)
+        return fn
+    return deco
+
+
+def blink_at(t, centre=0.66, width=0.045):
+    return max(0.0, 1.0 - abs(t - centre) / width)
+
+
+def eye(p, cx, cy, w, h, t, blink=0.0, look=(0.0, 0.0), lw=2.2, lashes=True):
+    o = max(0.04, 1.0 - blink)
+    n = 40
+    xs = [cx + w / 2 * (-1 + 2 * i / n) for i in range(n + 1)]
+    cs = [math.cos(math.pi * (-0.5 + i / n)) for i in range(n + 1)]
+    up = [(x, cy + h / 2 * c * o) for x, c in zip(xs, cs)]
+    lo = [(x, cy - h / 2 * c * o * 0.85) for x, c in zip(xs, cs)]
+    p.poly(up + lo[::-1], "fill")
+    if o > 0.12:
+        ir = h * 0.36
+        with p.tf(dx=cx + look[0] * w * 0.12, dy=cy + look[1] * h * 0.06, sy=o):
+            p.disc(0, 0, ir, "fill")
+            p.circle(0, 0, ir, lw * 0.8, "accent", 230)
+            p.circle(0, 0, ir * 0.72, 1.0, "ink", 150)
+            p.disc(0, 0, ir * 0.42, "ink", occlude=False)
+            p.dot(ir * 0.25, ir * 0.25, 1.4, "accent", 255)
+    p.line(up, lw)
+    p.line(lo, lw)
+    if lashes:
+        for i in range(5, n - 4, 6):
+            x, y = up[i]
+            k = (i / n - 0.5) * 1.4
+            p.line([(x, y), (x + k * h * 0.25, y + h * 0.22 * o)], lw * 0.55, "ink", 200)
+
+
+def crescent(p, cx, cy, r, facing, depth=0.55, layer="ink"):
+    """Crescent moon whose horns point toward `facing` (degrees)."""
+    tip_a = 50.0
+    t1 = polar(r, facing + tip_a, cx, cy)
+    t2 = polar(r, facing - tip_a, cx, cy)
+    outer = p.circle_pts(cx, cy, r, facing + tip_a, facing + 360 - tip_a, 60)
+    icx, icy = polar(r * depth, facing, cx, cy)
+    a1 = math.degrees(math.atan2(t2[1] - icy, t2[0] - icx))
+    a0 = math.degrees(math.atan2(t1[1] - icy, t1[0] - icx))
+    while a0 <= a1:
+        a0 += 360
+    ri = math.dist(t1, (icx, icy))
+    inner = p.circle_pts(icx, icy, ri, a1, a0 - 360 if a0 - a1 > 360 else a0, 60)
+    # inner arc must run through the back side, opposite `facing`
+    mid = inner[len(inner) // 2]
+    if math.dist(mid, polar(r, facing, cx, cy)) < math.dist(mid, polar(r, facing + 180, cx, cy)):
+        inner = p.circle_pts(icx, icy, ri, a1, a0 - 360, 60)
+    p.poly(outer + inner[::-1], layer)
+
+
+def project(v, ry, rx, rz=0.0):
+    x, y, z = v
+    c, s = math.cos(ry), math.sin(ry)
+    x, z = c * x + s * z, -s * x + c * z
+    c, s = math.cos(rx), math.sin(rx)
+    y, z = c * y - s * z, s * y + c * z
+    c, s = math.cos(rz), math.sin(rz)
+    x, y = c * x - s * y, s * x + c * y
+    k = 1.0 / (1.0 - z * 0.12)
+    return (x * k, y * k, z)
+
+
+def edges_by_length(verts):
+    d = [math.dist(a, b) for i, a in enumerate(verts) for b in verts[i + 1:]]
+    m = min(d)
+    return [(i, j) for i in range(len(verts)) for j in range(i + 1, len(verts))
+            if abs(math.dist(verts[i], verts[j]) - m) < 1e-6]
+
+
+def wireframe(p, verts, edges, ry, rx, rz, scale, lw=2.2):
+    pts = [project(v, ry, rx, rz) for v in verts]
+    order = sorted(edges, key=lambda e: pts[e[0]][2] + pts[e[1]][2])
+    for i, j in order:
+        z = (pts[i][2] + pts[j][2]) / 2
+        k = (z + 1) / 2
+        p.line([(pts[i][0] * scale, pts[i][1] * scale), (pts[j][0] * scale, pts[j][1] * scale)],
+               lerp(1.0, lw, k), "ink", int(lerp(90, 255, k)))
+    for x, y, z in pts:
+        if z > -0.2:
+            p.dot(x * scale, y * scale, lerp(1.2, 2.8, (z + 1) / 2), "accent", int(lerp(120, 255, (z + 1) / 2)))
+
+
+def lotus_petal(r0, r1, a, half):
+    """Pointed petal from radius r0 to tip r1 at angle a (deg), base half-angle."""
+    b1, b2 = polar(r0, a - half), polar(r0, a + half)
+    tip = polar(r1, a)
+    m1, m2 = polar(lerp(r0, r1, 0.65), a - half * 1.15), polar(lerp(r0, r1, 0.65), a + half * 1.15)
+    return bezier(b1, m1, tip, 12) + bezier(tip, m2, b2, 12)[1:]
+
+
+def helix_runs(points, depths):
+    """Split a path into front (depth>0) / back runs."""
+    runs, cur, sign = [], [points[0]], depths[0] > 0
+    for pt, d in zip(points[1:], depths[1:]):
+        cur.append(pt)
+        if (d > 0) != sign:
+            runs.append((sign, cur))
+            cur, sign = [pt], d > 0
+    runs.append((sign, cur))
+    return runs
+
+
+def serpent_run(p, pts, widths, lw=1.8):
+    poly = thick(pts, widths)
+    p.poly(poly, "fill")
+    p.poly(poly, "accent", 55, occlude=False)
+    p.poly(thick(pts, [w * 0.35 for w in widths]), "ink", 90, occlude=False)
+    p.line(poly, lw, closed=True)
+
+
+# ---------------------------------------------------------------------------
+@sigil("providence", "The Eye of Providence", "Freemasonry", 8,
+       "The all-seeing eye in the radiant delta: the Great Architect watching over the unfinished work of the world",
+       variants=[("Radiant Delta", 1), ("Unfinished Pyramid", 1)],
+       rings=("Emerald Tablet", "Hebrew Alphabet", "Zodiac", "Greek Alphabet"))
+def providence(p, t, v):
+    blink = blink_at(t)
+    look = (math.sin(TAU * t), 0.5 * math.sin(TAU * 2 * t))
+    if v["variant"] == "Radiant Delta":
+        for i in range(36):
+            a = 90 + i * 10
+            L = (1.12 + 0.22 * wave(t, 2, i * 0.29)) if i % 2 else (1.30 + 0.12 * wave(t, 1, i * 0.17))
+            p.line([polar(0.6, a), polar(L, a)], 1.3 if i % 2 else 2.0, "ink", 170)
+        tri = ngon(3, 1.0, 90, 0, -0.08)
+        p.poly(tri, "fill")
+        p.line(tri, 3.0, closed=True)
+        p.line(ngon(3, 0.88, 90, 0, -0.08), 1.2, "ink", 180, closed=True)
+        eye(p, 0, -0.12, 0.74, 0.34, t, blink, look)
+    else:
+        top, base, hw = 0.98, -0.92, 1.05
+        half = lambda y: hw * (top - y) / (top - base)  # noqa: E731
+        y1 = -0.02
+        body = [(-hw, base), (hw, base), (half(y1), y1), (-half(y1), y1)]
+        p.poly(body, "fill")
+        rows = 9
+        for r in range(1, rows):
+            y = lerp(base, y1, r / rows)
+            p.line([(-half(y), y), (half(y), y)], 1.1, "ink", 190)
+            y0 = lerp(base, y1, (r - 1) / rows)
+            step = 0.21
+            off = (r % 2) * step / 2
+            x = -half(y0) + off + step
+            while x < half(y0) - 0.04:
+                p.line([(x, y0), (x, y)], 1.1, "ink", 160)
+                x += step
+        p.line(body, 2.6, closed=True)
+        p.text("MDCCLXXVI", 0, base + 0.06, 10, "serif", "ink", 230)
+        dy = 0.035 * math.sin(TAU * t)
+        cy0 = 0.12 + dy
+        cap = [(-half(0.12), cy0), (half(0.12), cy0), (0, top + dy)]
+        cc = (0, (cy0 * 2 + top + dy) / 3)
+        for i in range(28):
+            a = i * 360 / 28 + 90
+            L = (0.78 if i % 2 else 0.96) + 0.1 * wave(t, 2, i * 0.31)
+            p.line([polar(0.3, a, *cc), polar(L, a, *cc)], 1.3 if i % 2 else 1.9, "ink", 170)
+        p.poly(cap, "fill")
+        p.line(cap, 2.6, closed=True)
+        eye(p, cc[0], cc[1] - 0.03, 0.44, 0.2, t, blink, look, 1.8, lashes=False)
+
+
+@sigil("ouroboros", "The Ouroboros", "Graeco-Egyptian Alchemy", 7,
+       "The serpent that devours its own tail, drawn after the Chrysopoeia of Cleopatra: ΕΝ ΤΟ ΠΑΝ, the One is the All",
+       rings=("Greek Alphabet", "Planetary Metals", "Alchemical Elements", "Emerald Tablet"))
+def ouroboros(p, t, v):
+    R, a0, span = 0.76, 88.0, 344.0
+    n = 200
+    th = lambda s: 0.18 * (1 - s) ** 0.85 + 0.03 * s  # noqa: E731
+    ss = [i / n for i in range(n + 1)]
+    centre = [polar(R, a0 - span * s) for s in ss]
+    body = thick(centre, [th(s) for s in ss])
+    p.poly(body, "fill")
+    # belly band (lighter half of the Chrysopoeia serpent)
+    belly = thick([polar(R - th(s) * 0.22, a0 - span * s) for s in ss], [th(s) * 0.42 for s in ss])
+    p.poly(belly, "accent", 70, occlude=False)
+    p.line(body, 2.2, closed=True)
+    N = 38
+    for k in range(N):
+        s = (k + t) / N
+        if s > 0.96 or s < 0.02:
+            continue
+        a = math.radians(a0 - span * s)
+        w = th(s)
+        ur = (math.cos(a), math.sin(a))
+        ut = (math.sin(a), -math.cos(a))
+        c = (R * ur[0], R * ur[1])
+        pts = [(c[0] + ur[0] * w * 0.36 + ut[0] * w * 0.28, c[1] + ur[1] * w * 0.36 + ut[1] * w * 0.28),
+               (c[0] - ut[0] * w * 0.12, c[1] - ut[1] * w * 0.12),
+               (c[0] - ur[0] * w * 0.36 + ut[0] * w * 0.28, c[1] - ur[1] * w * 0.36 + ut[1] * w * 0.28)]
+        p.line(pts, 1.4, "ink", 210)
+    ah = math.radians(95)
+    hc = (R * math.cos(ah), R * math.sin(ah))
+    ur = (math.cos(ah), math.sin(ah))
+    ut = (-math.sin(ah), math.cos(ah))
+    L = lambda u, w: (hc[0] + ut[0] * u + ur[0] * w, hc[1] + ut[1] * u + ur[1] * w)  # noqa: E731
+    head = [L(-0.15, 0.09), L(-0.02, 0.125), L(0.11, 0.105), L(0.2, 0.05), L(0.215, 0.022),
+            L(0.085, 0.004), L(0.19, -0.035), L(0.16, -0.065), L(0.03, -0.1), L(-0.15, -0.09)]
+    p.poly(head, "fill")
+    p.line(head, 2.2, closed=True)
+    ex, ey = L(0.07, 0.05)
+    p.disc(ex, ey, 0.026, "accent", 255)
+    p.dot(ex, ey, 1.2, "fill", 255)
+    tongue = 0.03 * wave(t, 3)
+    p.line([L(0.215, 0.012), L(0.27 + tongue, 0.03), L(0.29 + tongue, 0.045)], 1.2, "accent", 220)
+    p.text("ΕΝ ΤΟ ΠΑΝ", 0, 0, 22, "serif_text", "ink", 235, upright=True)
+
+
+@sigil("squared_circle", "The Squaring of the Circle", "European Alchemy", 6,
+       "Make of man and woman a circle, then a square, then a triangle, then a circle, and you will have the Stone (Maier, Atalanta Fugiens, Emblem XXI)",
+       rings=("Planetary Metals", "Alchemical Elements", "Zodiac"))
+def squared_circle(p, t, v):
+    R = 0.98
+    for a in (0, 90, 45, 135):
+        p.line([polar(R, a), polar(R, a + 180)], 1.0, "faint", 255)
+    p.circle(0, 0, R, 2.8)
+    p.circle(0, 0, R + 0.04, 1.0, "ink", 160)
+    sq = ngon(4, R, 45 + 90 * t)
+    p.poly(sq, "fill", 255)
+    p.line(sq, 2.4, closed=True)
+    r2 = R / math.sqrt(2)
+    p.circle(0, 0, r2, 1.2, "ink", 170)
+    tri = ngon(3, r2, 90 - 120 * t)
+    p.line(tri, 2.4, closed=True)
+    r3 = r2 / 2
+    p.ring(0, 0, r3, 2.4)
+    for x, y in sq + tri:
+        p.dot(x, y, 3.2, "accent")
+    p.text("☉", -0.12, 0.0, 22, "symbols", "ink", 255, upright=True)
+    p.text("☽", 0.12, 0.0, 22, "symbols", "accent", 255, upright=True)
+
+
+@sigil("monas", "The Hieroglyphic Monad", "Elizabethan Hermeticism", 5,
+       "John Dee's Monas Hieroglyphica (1564): Moon, Sun, the cross of the Elements and the fire of Aries, all planets folded into one glyph",
+       rings=("Planetary Metals", "Zodiac", "Emerald Tablet"))
+def monas(p, t, v):
+    bob = 0.03 * math.sin(TAU * t)
+    p.circle(0, bob * 0.3, 1.0, 1.0, "faint", 255)
+    with p.tf(dy=bob):
+        arc = p.circle_pts(0, 0.82, 0.3, 192, 348, 60)
+        ws = [0.015 + 0.085 * math.sin(math.pi * i / (len(arc) - 1)) for i in range(len(arc))]
+        p.poly(thick(arc, ws), "ink")
+        p.ring(0, 0.16, 0.27, 3.0)
+        p.disc(0, 0.16, 0.05 * (1 + 0.3 * wave(t, 2)), "accent", 255, occlude=False)
+        p.line([(0, -0.11), (0, -0.80)], 3.4)
+        p.line([(-0.27, -0.40), (0.27, -0.40)], 3.4)
+        p.arc(-0.12, -0.80, 0.12, 0, 180, 3.0)
+        p.arc(0.12, -0.80, 0.12, 0, 180, 3.0)
+    for i in range(4):
+        a = 45 + 90 * i
+        p.dot(*polar(0.95, a + 90 * t), 2.2, "accent", 200)
+
+
+SEPHIROTH = [(0, 0), (1, 1), (-1, 1), (1, 3), (-1, 3), (0, 4), (1, 5), (-1, 5), (0, 6), (0, 8)]
+PATHS = [(0, 1), (0, 2), (0, 5), (1, 2), (1, 3), (1, 5), (2, 4), (2, 5), (3, 4), (3, 5), (3, 6),
+         (4, 5), (4, 7), (5, 6), (5, 7), (5, 8), (6, 7), (6, 8), (6, 9), (7, 8), (7, 9), (8, 9)]
+
+
+@sigil("tree_of_life", "The Tree of Life", "Kabbalah", 7,
+       "The ten Sephiroth and twenty-two paths of the Otz Chiim, struck through by the Lightning Flash that descends from Kether to Malkuth",
+       rings=("Hebrew Alphabet", "Zodiac", "Planetary Metals"))
+def tree_of_life(p, t, v):
+    pos = [(x * 0.43, 0.97 - y * 0.2425) for x, y in SEPHIROTH]
+    for a, b in PATHS:
+        p.line([pos[a], pos[b]], 4.2, "faint", 200)
+        p.line([pos[a], pos[b]], 1.4, "ink", 200)
+    p.circle(0, 0.97 - 2 * 0.2425, 0.07, 1.0, "ink", 140)  # Daath
+    flash = pos[:]
+    u = t / 0.8
+    lens = [0.0]
+    for i in range(9):
+        lens.append(lens[-1] + math.dist(flash[i], flash[i + 1]))
+    frac = [x / lens[-1] for x in lens]
+    if u <= 1:
+        p.line(sub_path(flash, max(0, u - 0.14), u, 30), 3.2, "accent", 255)
+    letters = "אבגדהוזחטי"
+    for i, (x, y) in enumerate(pos):
+        p.ring(x, y, 0.088, 2.2)
+        lit = math.exp(-(u - frac[i]) * 9) if u >= frac[i] else 0.0
+        if lit > 0.02:
+            p.circle(x, y, 0.088, 3.4, "accent", int(255 * lit))
+        p.text(letters[i], x, y, 13, "hebrew", "ink", 255, upright=True)
+
+
+@sigil("sri_yantra", "The Sri Yantra", "Tantra", 5,
+       "Nine interlocking triangles, four of Shiva and five of Shakti, radiating from the bindu: the cosmos as a diagram of union",
+       rings=("Om Mani Padme Hum", "Zodiac"))
+def sri_yantra(p, t, v):
+    hw, gate = 0.8, 0.16
+    for k, d in enumerate((0.0, 0.035, 0.07)):
+        h = hw - d
+        g = gate + d
+        pts = []
+        for side in range(4):
+            rot = 90 * side
+            seg = [(-h, -h), (-g, -h), (-g, -h - 0.06 + d), (g, -h - 0.06 + d), (g, -h)]
+            c, s = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+            pts += [(c * x - s * y, s * x + c * y) for x, y in seg]
+        p.line(pts, 2.0 if k == 0 else 1.2, "ink", 255 if k == 0 else 190, closed=True)
+    for r in (0.74, 0.71):
+        p.circle(0, 0, r, 1.4, "ink", 210)
+    for i in range(16):
+        p.line(lotus_petal(0.56, 0.70, i * 22.5 + 22.5 * t, 10.5), 1.5, "ink", 230)
+    p.circle(0, 0, 0.555, 1.2, "ink", 200)
+    for i in range(8):
+        p.line(lotus_petal(0.42, 0.55, i * 45 - 45 * t + 22.5, 21), 1.6, "ink", 230)
+    S = 0.41
+    p.circle(0, 0, S, 1.6)
+    up = [(-0.68, 1.0), (-0.46, 0.62), (-0.18, 0.46), (-0.06, 0.24)]
+    down = [(0.75, -1.0), (0.44, -0.74), (0.30, -0.42), (0.12, -0.26), (0.52, 0.06)]
+    allt = [(yb, ya) for yb, ya in up] + [(yb, ya) for yb, ya in down]
+    for i, (yb, ya) in enumerate(allt):
+        hwid = min(math.sqrt(max(0.0, 1 - yb * yb)), 0.66 * abs(ya - yb))
+        tri = [(-hwid * S, yb * S), (hwid * S, yb * S), (0, ya * S)]
+        p.line(tri, 1.6, "ink", 255, closed=True)
+        g = wave(t, 1, i / len(allt))
+        if g > 0.85:
+            p.line(tri, 2.2, "accent", int(255 * (g - 0.85) / 0.15), closed=True)
+    p.disc(0, 0.02, 0.022 * (1 + 0.5 * wave(t, 2)), "accent", 255, occlude=False)
+
+
+@sigil("flower_of_life", "The Flower of Life", "Sacred Geometry", 6,
+       "Overlapping circles of equal measure, cut into the granite of the Osirion at Abydos: the seed from which all forms unfold",
+       variants=[("Flower", 2), ("Seed", 1)],
+       rings=("Greek Alphabet", "Hieroglyphs", "Zodiac"))
+def flower_of_life(p, t, v):
+    r = 0.3
+    k = 0.55 + 0.45 * math.cos(TAU * t)
+    rings = 1 if v["variant"] == "Seed" else 2
+    if rings == 1:
+        r = 0.42
+    centres = [(0.0, 0.0)]
+    for ring in range(1, rings + 1):
+        for side in range(6):
+            a0 = polar(ring * r, 60 * side)
+            a1 = polar(ring * r, 60 * (side + 1))
+            for j in range(ring):
+                centres.append((lerp(a0[0], a1[0], j / ring), lerp(a0[1], a1[1], j / ring)))
+    rot = 60 * t
+    outer = r * (rings + 1)
+    p.circle(0, 0, outer, 2.6)
+    p.circle(0, 0, outer + 0.04, 1.0, "ink", 170)
+    with p.tf(rot=rot):
+        for i, (x, y) in enumerate(centres):
+            d = math.hypot(x, y) / (rings * r) if rings else 0
+            vv = int(255 * (0.6 + 0.4 * wave(t, 1, -d * 0.5)))
+            p.circle(x * k, y * k, r, 1.8, "ink", vv)
+        for x, y in centres:
+            p.dot(x * k, y * k, 1.8, "accent", 200)
+
+
+@sigil("metatron", "Metatron's Cube", "Sacred Geometry", 5,
+       "Thirteen circles of the Fruit of Life joined by seventy-eight lines, within which every Platonic solid lies hidden",
+       rings=("Hebrew Alphabet", "Greek Alphabet"))
+def metatron(p, t, v):
+    d, r = 0.42, 0.13
+    cs = [(0.0, 0.0)] + [polar(d, 90 + 60 * i) for i in range(6)] + [polar(2 * d, 90 + 60 * i) for i in range(6)]
+    for i, a in enumerate(cs):
+        for b in cs[i + 1:]:
+            p.line([a, b], 1.0, "ink", 120)
+    for i, (x, y) in enumerate(cs):
+        p.ring(x, y, r, 1.8)
+        g = wave(t, 1, -i / 13)
+        if g > 0.8:
+            p.circle(x, y, r * 0.6, 1.6, "accent", int(255 * (g - 0.8) / 0.2))
+    cube = [(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)]
+    p.disc(0, 0, r, "fill")
+    wireframe(p, cube, edges_by_length(cube), TAU * t, 0.62, 0.0, 0.075, 1.6)
+
+
+SOLIDS = {
+    "Tetrahedron (Fire)": [(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)],
+    "Octahedron (Air)": [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)],
+    "Cube (Earth)": [(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)],
+}
+_phi = (1 + 5 ** 0.5) / 2
+SOLIDS["Icosahedron (Water)"] = [p for a in (-1, 1) for b in (-_phi, _phi)
+                                 for p in ((0, a, b), (a, b, 0), (b, 0, a))]
+SOLIDS["Dodecahedron (Aether)"] = ([(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)] +
+                                   [p for a in (-1 / _phi, 1 / _phi) for b in (-_phi, _phi)
+                                    for p in ((0, a, b), (a, b, 0), (b, 0, a))])
+
+
+@sigil("platonic", "The Platonic Solid", "Platonism", 6,
+       "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens",
+       variants=[(k, 1) for k in SOLIDS] + [("Star Tetrahedron", 1)],
+       rings=("Greek Alphabet", "Alchemical Elements", "Planetary Metals"))
+def platonic(p, t, v):
+    var = v["variant"]
+    p.circle(0, 0, 0.98, 1.4, "ink", 150)
+    p.circle(0, 0, 0.98, 6.0, "faint", 120)
+    ry, rx, rz = TAU * t, 0.45, 0.25 * math.sin(TAU * t)
+    if var == "Star Tetrahedron":
+        a = [(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)]
+        b = [(-x, -y, -z) for x, y, z in a]
+        for verts in (a, b):
+            wireframe(p, verts, edges_by_length(verts), ry, rx, rz, 0.5, 2.4)
+        return
+    verts = SOLIDS[var]
+    m = max(math.sqrt(x * x + y * y + z * z) for x, y, z in verts)
+    verts = [(x / m, y / m, z / m) for x, y, z in verts]
+    wireframe(p, verts, edges_by_length(verts), ry, rx, rz, 0.8, 2.6)
+
+
+@sigil("solomon", "The Seal of Solomon", "Solomonic Magic", 6,
+       "Two triangles, fire and water, above and below, locked into the hexagram with which Solomon bound the spirits",
+       rings=("Hebrew Alphabet", "Planetary Metals", "Zodiac"))
+def solomon(p, t, v):
+    p.circle(0, 0, 0.98, 2.6)
+    p.circle(0, 0, 0.90, 1.4)
+    for i in range(36):
+        p.dot(*polar(0.94, i * 10 + 10 * t), 1.4, "ink", 200)
+    up = ngon(3, 0.86, 90 + 120 * t)
+    dn = ngon(3, 0.86, 270 - 120 * t)
+    p.line(up, 4.4, "faint", 255, closed=True)
+    p.line(dn, 4.4, "faint", 255, closed=True)
+    p.line(up, 2.4, "ink", 255, closed=True)
+    p.line(dn, 2.4, "accent", 230, closed=True)
+    p.disc(0, 0, 0.26, "fill")
+    p.circle(0, 0, 0.26, 1.4, "ink", 200)
+    p.text("יהוה", 0, 0.0, 24, "hebrew", "ink", 255, upright=True)
+
+
+@sigil("horus", "The Eye of Horus", "Egyptian Mysteries", 7,
+       "The Wedjat, the eye Horus lost fighting Set and Thoth made whole again: health, restoration and the full measure",
+       rings=("Hieroglyphs",))
+def horus(p, t, v):
+    with p.tf(dy=0.08, s=1.0 + 0.02 * math.sin(TAU * t)):
+        brow = bezier3((-0.8, 0.42), (-0.3, 0.66), (0.35, 0.66), (0.84, 0.44), 40)
+        p.poly(thick(brow, [lerp(0.11, 0.06, i / 40) for i in range(41)]), "ink")
+        up = bezier3((-0.6, 0.05), (-0.3, 0.36), (0.25, 0.33), (0.58, 0.03), 40)
+        lo = bezier3((-0.6, 0.05), (-0.25, -0.18), (0.25, -0.16), (0.58, 0.03), 40)
+        p.poly(up + lo[::-1], "fill")
+        lx = 0.07 * math.sin(TAU * t)
+        p.disc(lx, 0.07, 0.165, "ink", occlude=False)
+        p.dot(lx + 0.05, 0.12, 2.4, "accent", 255)
+        p.line(up, 3.4)
+        p.line(lo, 3.0)
+        liner = bezier((0.5, 0.05), (0.76, 0.1), (0.98, 0.04), 20)
+        p.poly(thick(liner, [lerp(0.06, 0.035, i / 20) for i in range(21)]), "ink")
+        drop = bezier((-0.08, -0.14), (-0.1, -0.4), (-0.18, -0.7), 20)
+        p.poly(thick(drop, [lerp(0.07, 0.045, i / 20) for i in range(21)]), "ink")
+        p.poly([(-0.25, -0.74), (-0.11, -0.74), (-0.18, -0.66)], "ink")
+        lead = bezier3((0.12, -0.13), (0.14, -0.4), (0.27, -0.46), (0.40, -0.46), 20)
+        C = (0.40, -0.62)
+        spiral = [polar(lerp(0.16, 0.035, i / 50), 90 - 450 * i / 50, *C) for i in range(51)]
+        path = lead + spiral[1:]
+        p.poly(thick(path, [lerp(0.055, 0.025, i / len(path)) for i in range(len(path))]), "ink")
+        spark = path_point(drop + path[::-1], t)
+        p.dot(*spark, 3.2, "accent", int(255 * wave(t, 2)))
+
+
+@sigil("ankh", "The Ankh beneath the Aten", "Egyptian Mysteries", 6,
+       "The key of life held to the nostrils of kings, beneath the sun-disc whose rays end in open hands",
+       rings=("Hieroglyphs",))
+def ankh(p, t, v):
+    sun = (0, 0.9)
+    for i in range(11):
+        a = 205 + i * 13
+        end = polar(1.15, a, *sun)
+        p.line([polar(0.12, a, *sun), end], 1.4, "ink", 170)
+        p.disc(*end, 0.025, "ink", 200, occlude=False)
+        for k in range(3):
+            u = ((k + t) / 3)
+            p.dot(*polar(lerp(0.15, 1.1, u), a, *sun), 1.8, "accent", int(255 * math.sin(math.pi * u)))
+    p.disc(*sun, 0.1, "ink", occlude=False)
+    p.circle(*sun, 0.13, 1.4, "accent", 200)
+    loop = [(0.25 * math.cos(a), 0.47 + 0.33 * math.sin(a)) for a in (TAU * i / 120 for i in range(121))]
+    shape_parts = [
+        thick(loop, 0.1),
+        [(-0.1, 0.17), (-0.5, 0.24), (-0.5, -0.03), (-0.1, 0.04), (0.1, 0.04), (0.5, -0.03), (0.5, 0.24), (0.1, 0.17)],
+        [(-0.065, 0.12), (0.065, 0.12), (0.14, -0.95), (-0.14, -0.95)],
+    ]
+    for part in shape_parts:
+        p.poly(part, "fill")
+    for part in shape_parts:
+        p.poly(part, "ink", occlude=False)
+    inner = [(0.25 * 0.82 * math.cos(a), 0.47 + 0.33 * 0.86 * math.sin(a)) for a in (TAU * i / 120 for i in range(121))]
+    p.line(inner, 1.0, "ink", 0)
+    p.line([(0, 0.05), (0, -0.88)], 1.0, "ink", 0)
+    p.line([(-0.45, 0.105), (0.45, 0.105)], 1.0, "ink", 0)
+
+
+@sigil("caduceus", "The Caduceus of Hermes", "Hermeticism", 7,
+       "The winged staff of Hermes Trismegistus about which two serpents twine: the opposing currents reconciled",
+       rings=("Planetary Metals", "Alchemical Elements", "Emerald Tablet"))
+def caduceus(p, t, v):
+    flap = 6 * math.sin(TAU * t)
+    for side in (1, -1):
+        with p.tf(dy=0.6, sx=side, rot=flap * side * 0):
+            feathers = [(155, 0.62), (145, 0.58), (133, 0.5), (122, 0.42), (112, 0.33)]
+            for k, (ang, L) in enumerate(feathers):
+                a = ang - flap * (1 - k * 0.15)
+                root = (-0.05, 0.0)
+                tip = polar(L, a, *root)
+                mid = polar(L * 0.55, a - 8, *root)
+                f = thick(bezier(root, mid, tip, 16), [lerp(0.09, 0.02, i / 16) for i in range(17)])
+                p.poly(f, "fill")
+                p.line(f, 1.6, closed=True)
+    staff = [(-0.028, 0.6), (0.028, 0.6), (0.04, -0.96), (-0.04, -0.96)]
+    y_top, y_bot, turns = 0.4, -0.82, 2.25
+    k = TAU * turns / (y_top - y_bot)
+    snakes = []
+    for phase in (0.0, math.pi):
+        pts, dep, wid = [], [], []
+        for i in range(161):
+            y = lerp(y_bot, y_top, i / 160)
+            th = math.pi / 2 + phase - (y_top - y) * k
+            A = 0.07 + 0.2 * math.sin(math.pi * (0.15 + 0.75 * (y - y_bot) / (y_top - y_bot)))
+            pts.append((A * math.sin(th), y))
+            dep.append(math.cos(th))
+            wid.append(lerp(0.025, 0.075, (i / 160) ** 0.7))
+        snakes.append((pts, dep, wid))
+    runs = []
+    for pts, dep, wid in snakes:
+        idx = 0
+        for front, run in helix_runs(pts, dep):
+            n = len(run)
+            runs.append((front, run, wid[idx:idx + n]))
+            idx += n - 1
+    for front, run, w in runs:
+        if not front:
+            serpent_run(p, run, w)
+    p.poly(staff, "fill")
+    p.poly(staff, "ink", occlude=False)
+    p.line([(0, 0.55), (0, -0.9)], 1.0, "ink", 0)
+    for front, run, w in runs:
+        if front:
+            serpent_run(p, run, w)
+    for pts, dep, wid in snakes:
+        x, y = pts[-1]
+        side = 1 if x > 0 else -1
+        hd = [(x - side * 0.04, y - 0.03), (x + side * 0.02, y + 0.06), (x - side * 0.1, y + 0.13),
+              (x - side * 0.17, y + 0.09), (x - side * 0.1, y + 0.03)]
+        p.poly(hd, "fill")
+        p.line(hd, 1.6, closed=True)
+        p.dot(x - side * 0.08, y + 0.09, 1.6, "accent")
+        u = (t + (0.5 if side > 0 else 0)) % 1
+        p.dot(*path_point(pts, u), 3.0, "accent", int(255 * math.sin(math.pi * u)))
+    p.ring(0, 0.68, 0.075, 2.0)
+    p.disc(0, 0.68, 0.035 * (1 + 0.3 * wave(t, 2)), "accent", 255, occlude=False)
+
+
+@sigil("rose_cross", "The Rose Cross", "Rosicrucianism", 6,
+       "The rose of twenty-two petals blooming at the heart of the cross, after the Fama Fraternitatis and the Golden Dawn",
+       rings=("Hebrew Alphabet", "Zodiac", "Alchemical Elements", "Emerald Tablet"))
+def rose_cross(p, t, v):
+    cy = 0.2
+    ends = [((0, 0.86), (0, 1)), ((0, -0.98), (0, -1)), ((-0.78, cy), (-1, 0)), ((0.78, cy), (1, 0))]
+    for (x, y), (dx, dy) in ends:
+        for ox, oy in ((dx * 0.07, dy * 0.07), (-dy * 0.08, dx * 0.08), (dy * 0.08, -dx * 0.08)):
+            p.ring(x + ox, y + oy, 0.065, 2.0)
+    bars = [[(-0.085, -0.98), (0.085, -0.98), (0.085, 0.86), (-0.085, 0.86)],
+            [(-0.78, cy - 0.085), (0.78, cy - 0.085), (0.78, cy + 0.085), (-0.78, cy + 0.085)]]
+    for b in bars:
+        p.poly(b, "fill")
+    for b in bars:
+        p.line(b, 2.2, closed=True)
+        p.line([(lerp(b[0][0], b[2][0], 0.5), b[0][1]), (lerp(b[0][0], b[2][0], 0.5), b[2][1])] if b is bars[0]
+               else [(b[0][0], cy), (b[1][0], cy)], 1.0, "accent", 140)
+    for count, r0, r1, spin in ((12, 0.17, 0.4, 30 * t), (7, 0.1, 0.29, -360 / 7 * t), (3, 0.03, 0.18, 120 * t)):
+        for i in range(count):
+            a = 90 + spin + 360 * i / count + (180 / count if count == 7 else 0)
+            L = r1 - r0
+            hw = min(0.5 * L, math.radians(360 / count) * r1 * 0.62)
+            with p.tf(dx=0, dy=cy, rot=a):
+                pts = [(r0 + L / 2 + L / 2 * math.cos(s), hw * math.sin(s)) for s in (TAU * j / 40 for j in range(40))]
+                p.poly(pts, "fill")
+                p.poly(pts, "accent", 70, occlude=False)
+                p.line(pts, 1.6, closed=True)
+    p.disc(0, cy, 0.05, "accent", 255)
+
+
+TRIGRAMS = [(1, 1, 1), (0, 1, 1), (0, 1, 0), (0, 0, 1), (0, 0, 0), (1, 0, 0), (1, 0, 1), (1, 1, 0)]
+
+
+@sigil("taiji", "The Taijitu and the Eight Trigrams", "Taoism", 6,
+       "Yin and Yang turning within one another, ringed by the Earlier Heaven arrangement of Fu Xi's eight trigrams",
+       rings=("Bagua", "Zodiac"))
+def taiji(p, t, v):
+    R = 0.42
+    p.circle(0, 0, 0.98, 2.4)
+    p.circle(0, 0, 0.54, 1.2, "ink", 180)
+    cur = t * 8
+    for i, bits in enumerate(TRIGRAMS):
+        a = 90 - 45 * i
+        lit = max(0.0, 1 - min((cur - i) % 8, (i - cur) % 8) / 1.2)
+        with p.tf(rot=a - 90):
+            for k, bit in enumerate(bits):
+                y = 0.64 + 0.095 * k
+                segs = [(-0.16, 0.16)] if bit else [(-0.16, -0.035), (0.035, 0.16)]
+                for x0, x1 in segs:
+                    bar = [(x0, y - 0.03), (x1, y - 0.03), (x1, y + 0.03), (x0, y + 0.03)]
+                    p.poly(bar, "ink", 255)
+                    if lit > 0:
+                        p.poly(bar, "accent", int(255 * lit), occlude=False)
+    with p.tf(rot=-360 * t):
+        p.disc(0, 0, R, "fill")
+        yang = (p.circle_pts(0, 0, R, 90, -90, 90) + p.circle_pts(0, -R / 2, R / 2, -90, -270, 45)[1:]
+                + p.circle_pts(0, R / 2, R / 2, -90, 90, 45)[1:])
+        p.poly(yang, "ink", occlude=False)
+        p.disc(0, -R / 2, R * 0.13, "fill")
+        p.disc(0, R / 2, R * 0.13, "ink", occlude=False)
+        p.circle(0, 0, R, 2.4)
+
+
+@sigil("dharmachakra", "The Wheel of the Dharma", "Buddhism", 5,
+       "The eight-spoked wheel set turning in the deer park at Sarnath: the Noble Eightfold Path rolling through the world",
+       rings=("Om Mani Padme Hum",))
+def dharmachakra(p, t, v):
+    with p.tf(rot=-45 * t):
+        for i in range(8):
+            a = 22.5 + 45 * i
+            p.line([polar(0.8, a), polar(0.9, a)], 2.4)
+            p.ring(*polar(0.93, a), 0.05, 2.0)
+        ring = p.circle_pts(0, 0, 0.75, 0, 360, 240)
+        p.poly(thick(ring, 0.1), "fill")
+        p.poly(thick(ring, 0.1), "ink", occlude=False)
+        p.line(p.circle_pts(0, 0, 0.75, 0, 360, 240), 1.2, "ink", 0)
+        for i in range(8):
+            a = 22.5 + 45 * i
+            with p.tf(rot=a):
+                sp = [(0.17, 0), (0.42, 0.05), (0.7, 0.0), (0.42, -0.05)]
+                p.poly(sp, "fill")
+                p.line(sp, 1.8, closed=True)
+                p.line([(0.2, 0), (0.66, 0)], 1.0, "accent", 140)
+        p.ring(0, 0, 0.19, 2.2)
+    with p.tf(rot=120 * t):
+        for i in range(3):
+            with p.tf(rot=120 * i):
+                comma = p.circle_pts(0, 0.07, 0.07, -90, 90, 20) + p.circle_pts(0, 0.035, 0.035, 90, -90, 12)
+                p.poly(comma, "accent", 255, occlude=False)
+
+
+@sigil("pentalpha", "The Pentalpha", "Pythagoreanism", 4,
+       "The pentagram of the Pythagoreans, sign of Hygieia, whose heart holds a smaller star, and that one another, without end",
+       rings=("Greek Alphabet", "Planetary Metals"))
+def pentalpha(p, t, v):
+    phi2 = _phi ** 2
+    for n in range(-1, 7):
+        u = n - t
+        r = 0.95 * phi2 ** (-u)
+        fade = smooth(0.02, 0.09, r) * (1 - smooth(1.0, 2.1, r))
+        if fade <= 0.01:
+            continue
+        pts = ngon(5, r, 90 + 36 * u)
+        star = [pts[i] for i in (0, 2, 4, 1, 3)]
+        w = max(0.8, 2.6 * min(1.0, r / 0.5) ** 0.3)
+        p.line(star, w, "ink", int(255 * fade), closed=True)
+        p.circle(0, 0, r, 1.0, "ink", int(120 * fade))
+    p.circle(0, 0, 1.02, 2.4)
+    for i, ch in enumerate("ΥΓΙΘΑ"):
+        a = 90 - 72 * i
+        p.disc(*polar(1.02, a), 0.08, "fill")
+        p.circle(*polar(1.02, a), 0.08, 1.4)
+        p.text(ch, *polar(1.02, a), 14, "serif_text", "ink", 255, upright=True)
+
+
+@sigil("athanor", "The Philosophical Egg", "European Alchemy", 6,
+       "The sealed Vas Hermeticum upon the athanor's slow fire, in which the matter is dissolved, putrefied and reborn",
+       rings=("Alchemical Elements", "Planetary Metals", "VITRIOL"))
+def athanor(p, t, v):
+    base = [(-0.42, -0.62), (0.42, -0.62), (0.32, -0.98), (-0.32, -0.98)]
+    p.poly(base, "fill")
+    p.line(base, 2.2, closed=True)
+    for i in range(3):
+        y = -0.72 - 0.08 * i
+        p.line([(-0.36 + 0.03 * i, y), (0.36 - 0.03 * i, y)], 1.0, "ink", 160)
+    for i in range(7):
+        x = -0.3 + 0.1 * i
+        h = 0.18 + 0.08 * math.sin(TAU * (2 * t + i * 0.37)) + 0.04 * math.sin(TAU * (3 * t + i * 0.71))
+        fl = bezier((x - 0.05, -0.62), (x - 0.02, -0.62 + h * 0.6), (x + 0.02 * math.sin(TAU * (t + i * 0.2)), -0.62 + h), 10)
+        fl += bezier(fl[-1], (x + 0.03, -0.62 + h * 0.5), (x + 0.05, -0.62), 10)[1:]
+        p.poly(fl, "accent", 200, occlude=False)
+    cy, rx, ry = -0.05, 0.4, 0.5
+    egg = [(rx * math.sin(s) * (1 - 0.14 * math.cos(s)), cy + ry * math.cos(s))
+           for s in (TAU * i / 160 for i in range(160))]
+    neck = [(-0.05, cy + ry - 0.02), (-0.05, 0.84), (0.05, 0.84), (0.05, cy + ry - 0.02)]
+    p.poly(egg, "fill")
+    p.poly(neck, "fill")
+    lvl = -0.12
+    liquid = []
+    for x, y in egg:
+        if y < lvl:
+            liquid.append((x, y))
+    wavepts = [(x, lvl + 0.025 * math.sin(TAU * (t + x * 1.5))) for x in [lerp(-rx * 0.97, rx * 0.97, i / 30) for i in range(31)]]
+    liquid = sorted([q for q in liquid if q[0] > 0], key=lambda q: -q[1]) + \
+        sorted([q for q in liquid if q[0] <= 0], key=lambda q: q[1])
+    p.poly(liquid + wavepts, "accent", 60, occlude=False)
+    p.line(wavepts, 1.4, "ink", 200)
+    for i in range(7):
+        u = (t + i / 7) % 1
+        bx = lerp(-0.22, 0.22, (i * 0.618) % 1) + 0.02 * math.sin(TAU * (u * 2 + i))
+        by = lerp(-0.5, lvl - 0.02, u)
+        p.circle(bx, by, 0.018 + 0.012 * (i % 3), 1.0, "ink", int(220 * math.sin(math.pi * u)))
+    p.line(egg, 2.6, closed=True)
+    p.line(neck, 2.2)
+    p.ring(0, 0.88, 0.05, 2.0)
+    bob = 0.03 * math.sin(TAU * t)
+    with p.tf(dy=0.17 + bob):
+        p.circle(0, 0, 0.075, 2.2)
+        p.arc(0, 0.12, 0.075, 200, 340, 2.2)
+        p.line([(0, -0.075), (0, -0.25)], 2.2)
+        p.line([(-0.07, -0.165), (0.07, -0.165)], 2.2)
+        p.dot(0, 0, 2.2, "accent", int(255 * wave(t, 2)))
+
+
+@sigil("tetractys", "The Tetractys", "Pythagoreanism", 5,
+       "One, two, three and four, which make the perfect ten: the sacred figure by which the Pythagoreans swore their oath",
+       rings=("Greek Alphabet",))
+def tetractys(p, t, v):
+    s = 0.44
+    pts = [((j - k / 2) * s, 0.5 - k * s * 0.866) for k in range(4) for j in range(k + 1)]
+    tri = [(0, 0.98), (-1.04, -0.82), (1.04, -0.82)]
+    p.poly(tri, "fill")
+    p.line(tri, 2.6, closed=True)
+    p.line([(0, 0.86), (-0.9, -0.74), (0.9, -0.74)], 1.0, "ink", 150, closed=True)
+    for i, a in enumerate(pts):
+        for b in pts[i + 1:]:
+            if abs(math.dist(a, b) - s) < 1e-6:
+                p.line([a, b], 1.2, "ink", 150)
+    cur = t * 13
+    for i, (x, y) in enumerate(pts):
+        p.ring(x, y, 0.075, 2.2)
+        lit = 1.0 if i <= cur < 11 else 0.0
+        if cur >= 11:
+            lit = 1.0 - (cur - 11) / 2
+        lit *= smooth(i, i + 0.6, cur) if cur < 11 else 1.0
+        if lit > 0:
+            p.disc(x, y, 0.05, "accent", int(255 * lit), occlude=False)
+
+
+@sigil("triskele", "The Triple Spiral", "Celtic Mysteries", 5,
+       "Three spirals in one unbroken line, carved at the entrance stone of Newgrange five thousand years ago",
+       rings=("Ogham", "Elder Futhark"))
+def triskele(p, t, v):
+    p.circle(0, 0, 0.98, 2.2)
+    for i in range(48):
+        p.dot(*polar(0.92, 7.5 * i - 15 * t), 1.5, "ink", 200)
+    with p.tf(rot=-120 * t):
+        turns, rmax = 2.0, 0.27
+        for i in range(3):
+            c = polar(0.36, 90 + 120 * i)
+            a0 = 90 + 120 * i + 150
+            sp = [polar(rmax * (k / 120), a0 + 360 * turns * (k / 120 - 1), *c) for k in range(121)]
+            nxt_c = polar(0.36, 90 + 120 * (i + 1))
+            nxt_a0 = 90 + 120 * (i + 1) + 150
+            end = sp[-1]
+            nxt_end = polar(rmax, nxt_a0, *nxt_c)
+            tan = math.radians(a0 + 90)
+            ntan = math.radians(nxt_a0 + 90)
+            link = bezier3(end, (end[0] + 0.45 * math.cos(tan), end[1] + 0.45 * math.sin(tan)),
+                           (nxt_end[0] + 0.45 * math.cos(ntan), nxt_end[1] + 0.45 * math.sin(ntan)), nxt_end, 40)
+            p.line(sp, 4.2, "ink", 255)
+            p.line(link, 4.2, "ink", 255)
+            p.line(sp, 1.2, "fill", 255)
+        for i in range(3):
+            p.disc(*polar(0.36, 90 + 120 * i), 0.03 * (1 + 0.4 * wave(t, 1, i / 3)), "accent", 255, occlude=False)
+
+
+@sigil("enneagram", "The Enneagram", "Fourth Way", 4,
+       "Gurdjieff's symbol of perpetual motion: the Law of Three in the triangle, the Law of Seven in the circulating figure 1-4-2-8-5-7",
+       rings=("Greek Alphabet", "Planetary Metals"))
+def enneagram(p, t, v):
+    R = 0.82
+    pt = {k: polar(R, 90 - 40 * (k % 9)) for k in range(1, 10)}
+    p.circle(0, 0, R, 2.4)
+    tri = [pt[3], pt[6], pt[9]]
+    p.line(tri, 2.2, "ink", 255, closed=True)
+    hexad = [pt[k] for k in (1, 4, 2, 8, 5, 7)]
+    p.line(hexad, 2.2, "ink", 255, closed=True)
+    loop = hexad + [hexad[0]]
+    p.line(sub_path(loop, max(0, t - 0.08), t, 16), 3.2, "accent", 255)
+    p.dot(*path_point(loop, t), 3.4, "accent")
+    tl = tri + [tri[0]]
+    p.dot(*path_point(tl, (t * 2) % 1), 2.8, "accent", 220)
+    for k in range(1, 10):
+        x, y = pt[k]
+        p.ring(x, y, 0.045, 1.8)
+        p.text(str(k), *polar(R + 0.13, 90 - 40 * (k % 9)), 14, "serif_text", "ink", 255, upright=True)
+
+
+@sigil("coniunctio", "The Chymical Wedding of Sun and Moon", "European Alchemy", 6,
+       "Sol and Luna, the red king and the white queen, circling toward the conjunction from which the Mercury of the wise is born",
+       rings=("Planetary Metals", "Alchemical Elements", "Zodiac"))
+def coniunctio(p, t, v):
+    R = 0.56
+    p.circle(0, 0, R, 1.0, "ink", 140)
+    p.circle(0, 0, R, 5.0, "faint", 140)
+    a = 90 - 360 * t
+    sx, sy = polar(R, a)
+    with p.tf(dx=sx, dy=sy, rot=-90 * t):
+        for i in range(16):
+            ang = i * 22.5
+            if i % 2:
+                p.line([polar(0.2, ang), polar(0.31, ang)], 2.0)
+            else:
+                wv = [polar(lerp(0.2, 0.34, k / 12), ang + 6 * math.sin(k / 12 * TAU)) for k in range(13)]
+                p.line(wv, 1.4, "ink", 220)
+        p.ring(0, 0, 0.17, 2.6)
+        p.circle(0, 0, 0.11, 1.0, "ink", 160)
+        p.disc(0, 0, 0.04, "accent", 255, occlude=False)
+    mx, my = polar(R, a + 180)
+    p.disc(mx, my, 0.17, "fill")
+    crescent(p, mx, my, 0.16, a + 180 + 180, 0.5, "accent")
+    p.circle(mx, my, 0.16, 1.0, "ink", 120)
+    p.ring(0, 0, 0.1, 2.2)
+    p.arc(0, 0.155, 0.09, 200, 340, 2.2)
+    p.line([(0, -0.1), (0, -0.3)], 2.2)
+    p.line([(-0.08, -0.2), (0.08, -0.2)], 2.2)
+    p.dot(0, 0, 2.4, "accent", int(255 * wave(t, 2)))
+
+
+@sigil("kundalini", "The Serpent Power", "Yoga & Tantra", 4,
+       "Kundalini coiled at the root, rising through the seven lotuses along Sushumna while Ida and Pingala cross at every gate",
+       rings=("Om Mani Padme Hum",))
+def kundalini(p, t, v):
+    y0, y1 = -0.84, 0.84
+    sp = (y1 - y0) / 6
+    ys = [y0 + i * sp for i in range(7)]
+    petals = [4, 6, 10, 12, 16, 2, 24]
+    for side, layer in ((1, "ink"), (-1, "accent")):
+        pts = [(side * 0.22 * math.sin(math.pi * (y - y0) / sp), y) for y in (lerp(y0, y1, i / 200) for i in range(201))]
+        p.line(pts, 1.6, layer, 170)
+    p.line([(0, -0.98), (0, 0.98)], 2.4)
+    coil = [(0.05 * (1 + k / 70) * math.cos(TAU * 3.5 * k / 140 - TAU * t),
+             y0 - 0.06 + 0.022 * (1 + k / 70) * math.sin(TAU * 3.5 * k / 140 - TAU * t) + k * 0.001)
+            for k in range(141)]
+    p.line(coil, 2.0, "ink", 230)
+    e = lerp(-1.0, 1.05, t)
+    for i, (y, n) in enumerate(zip(ys, petals)):
+        rr = 0.1 if i < 6 else 0.13
+        if n == 2:
+            for s in (-1, 1):
+                pts = [(s * (0.05 + 0.08 * (1 - math.cos(a)) / 2 * 1.6), y + 0.06 * math.sin(a)) for a in (TAU * k / 30 for k in range(31))]
+                p.poly(pts, "fill")
+                p.line(pts, 1.4)
+        else:
+            for k in range(n):
+                pet = [(x, yy + y) for x, yy in lotus_petal(rr * 0.5, rr, 360 * k / n + 90, 180 / n * 0.85)]
+                p.poly(pet, "fill")
+                p.line(pet, 1.1, "ink", 230)
+        p.ring(0, y, rr * 0.5, 1.8)
+        lit = math.exp(-(e - y) * 4) if e >= y else 0.0
+        if lit > 0.03:
+            p.disc(0, y, rr * 0.32, "accent", int(255 * lit), occlude=False)
+    if -0.98 < e < 0.98:
+        p.dot(0, e, 3.6, "accent", 255)
+
+
+ZODIAC = "♈♉♊♋♌♍♎♏♐♑♒♓"
+RETE_STARS = [(0.62, 20), (0.52, 75), (0.70, 130), (0.40, 170), (0.60, 215), (0.66, 290), (0.36, 330)]
+
+
+@sigil("astrolabe", "The Astrolabe", "Hellenistic & Islamic Astronomy", 5,
+       "The instrument of the heavens: the turning rete of fixed stars above the tympan of the observer's sky",
+       rings=("Zodiac", "Planetary Metals", "Greek Alphabet"))
+def astrolabe(p, t, v):
+    p.circle(0, 0, 1.0, 2.6)
+    p.circle(0, 0, 0.86, 1.6)
+    for i in range(72):
+        a = 90 - i * 5
+        L = 0.92 if i % 6 else 0.86
+        p.line([polar(1.0, a), polar(L, a)], 1.2 if i % 6 else 1.8, "ink", 220)
+    for r in (0.66, 0.42, 0.26):
+        p.circle(0, 0, r, 1.0, "faint", 255)
+    for k in range(6):
+        p.circle(0, 0.18 + 0.025 * k, 0.48 - 0.07 * k, 1.0, "faint", 255)
+    for i in range(12):
+        p.line([(0, 0), polar(0.86, 90 - i * 30)], 1.0, "faint", 200)
+    with p.tf(rot=-360 * t):
+        p.circle(0, 0.16, 0.5, 2.4)
+        p.circle(0, 0.16, 0.43, 1.0, "ink", 200)
+        for i in range(12):
+            a = 90 - i * 30
+            p.line([polar(0.43, a, 0, 0.16), polar(0.5, a, 0, 0.16)], 1.4)
+            p.text(ZODIAC[i], *polar(0.465, a - 15, 0, 0.16), 10, "symbols", "ink", 230, angle=a - 15 - 90)
+        p.circle(0, 0, 0.74, 2.0)
+        for r, a in RETE_STARS:
+            base = polar(0.74, a)
+            tip = polar(r, a + 12)
+            p.line([base, polar(lerp(0.74, r, 0.5), a + 3), tip], 1.6)
+            flame = [polar(r + 0.04, a + 12), polar(r - 0.05, a + 5), tip]
+            p.poly(flame, "ink", 255, occlude=False)
+            p.dot(*tip, 2.0, "accent")
+    with p.tf(rot=180 * t):
+        rule = [(-0.98, -0.035), (0.98, -0.035), (0.98, 0.035), (-0.98, 0.035)]
+        p.poly(rule, "fill")
+        p.line(rule, 1.6, closed=True)
+        p.line([(-0.9, 0), (0.9, 0)], 1.0, "accent", 180)
+    p.ring(0, 0, 0.05, 2.0)
+
+
+@sigil("valknut", "The Valknut", "Norse Mysteries", 5,
+       "Three triangles knotted together, carved on the picture stones beside Odin and the fallen: the knot of the slain",
+       rings=("Elder Futhark",))
+def valknut(p, t, v):
+    r, w = 0.72, 0.17
+    for i in range(3):
+        c = polar(0.3, 270 + 120 * i, 0, 0.06)
+        band_o = ngon(3, r, 90, *c)
+        band_i = ngon(3, r - w, 90, *c)
+        p.poly(band_o + [band_o[0]] + [band_i[0]] + band_i[::-1], "fill")
+        p.line(band_o, 2.4, closed=True)
+        p.line(band_i, 2.4, closed=True)
+        mid = ngon(3, r - w / 2, 90, *c)
+        p.line(mid, 1.0, "ink", 110, closed=True)
+        loop = mid + [mid[0]]
+        u = (t + i / 3) % 1
+        p.line(sub_path(loop, max(0.0, u - 0.07), u, 12), 2.6, "accent", 230)
+    p.circle(0, 0, 1.0, 1.6, "ink", 200)
+    for i in range(24):
+        p.dot(*polar(1.0, 15 * i + 15 * t), 1.6, "accent", 200)
+
+
+@sigil("giza", "The Pyramids of Giza", "Egyptian Mysteries", 7,
+       "The three pyramids of the Giza plateau under the belt of Orion, the sky-form of Osiris",
+       rings=("Hieroglyphs", "Zodiac"))
+def giza(p, t, v):
+    p.circle(0, 0, 1.0, 2.6)
+    hy = -0.42
+    for k, (x, y, s) in enumerate(((-0.2, 0.66, 1.0), (0.24, 0.73, 0.82), (0.55, 0.8, 0.7))):
+        tw = wave(t, 2, k * 0.33)
+        p.poly([(x, y + 0.07 * s), (x + 0.015, y + 0.015), (x + 0.07 * s, y), (x + 0.015, y - 0.015),
+                (x, y - 0.07 * s), (x - 0.015, y - 0.015), (x - 0.07 * s, y), (x - 0.015, y + 0.015)],
+               "accent", int(140 + 115 * tw), occlude=False)
+    crescent(p, -0.6, 0.48, 0.09, 30, 0.55, "ink")
+    pyr = [(0.62, 0.28, 0.24, -0.36), (0.25, 0.42, 0.44, -0.39), (-0.32, 0.56, 0.58, -0.44)]
+    for cx, hw, h, by in pyr:
+        apex = (cx, by + h)
+        fx = cx + hw * 0.25
+        left = [(cx - hw, by), (fx, by), apex]
+        right = [(fx, by), (cx + hw, by), apex]
+        p.poly(left, "fill")
+        p.poly(right, "fill")
+        p.poly(left, "ink", 50, occlude=False)
+        for j in range(1, 8):
+            yy = by + h * j / 8
+            k = j / 8
+            p.line([(lerp(cx - hw, cx, k), yy), (lerp(fx, cx, k), yy)], 1.0, "ink", 110)
+        p.line(left + [right[1]], 2.2, closed=False)
+        p.line([right[1], apex], 2.2)
+        p.line([(fx, by), apex], 1.4, "ink", 200)
+    big = pyr[2]
+    ap = (big[0], big[3] + big[2])
+    beam = wave(t, 1)
+    p.line([ap, (ap[0], 0.97)], 2.0, "faint", int(255 * beam))
+    p.disc(*ap, 0.035 * (0.6 + 0.6 * beam), "accent", 255, occlude=False)
+    p.line([(-0.92, hy), (0.92, hy)], 2.0)
+    for r, y in enumerate((-0.55, -0.67, -0.79)):
+        hwid = math.sqrt(max(0.0, 0.98 ** 2 - y * y)) - 0.04
+        off = (t + r * 0.33) % 1
+        x = -hwid + (off - 1) * 0.3
+        while x < hwid:
+            x0, x1 = max(-hwid, x), min(hwid, x + 0.16)
+            if x1 > x0:
+                p.line([(x0, y), (x1, y + 0.01)], 1.2, "ink", 150)
+            x += 0.3
+
+
+@sigil("eleusis", "The Eleusinian Ear of Grain", "Eleusinian Mysteries", 4,
+       "An ear of wheat reaped in silence between the torches of Demeter and Persephone: the final revelation of Eleusis",
+       rings=("Greek Alphabet", "Zodiac"))
+def eleusis(p, t, v):
+    for side in (-1, 1):
+        x = side * 0.62
+        shaft = [(x - 0.03, -0.9), (x + 0.03, -0.9), (x + 0.07, 0.12), (x - 0.07, 0.12)]
+        p.poly(shaft, "fill")
+        p.line(shaft, 2.0, closed=True)
+        for j in range(4):
+            y = -0.7 + 0.22 * j
+            p.line([(x - 0.045, y), (x + 0.045, y + 0.05)], 1.2, "ink", 180)
+        cup = [(x - 0.11, 0.12), (x + 0.11, 0.12), (x + 0.08, 0.2), (x - 0.08, 0.2)]
+        p.poly(cup, "fill")
+        p.line(cup, 1.8, closed=True)
+        for k, (sc, layer, vv) in enumerate(((1.0, "accent", 170), (0.6, "ink", 255))):
+            tip = (x + 0.05 * math.sin(TAU * (2 * t + side * 0.25)), 0.2 + 0.46 * sc * (1 + 0.12 * math.sin(TAU * (3 * t + side * 0.3 + k * 0.5))))
+            flame = bezier3((x - 0.1 * sc, 0.2), (x - 0.12 * sc, 0.32 * sc + 0.2), (tip[0] - 0.04, tip[1] - 0.15 * sc), tip, 16) + \
+                bezier3(tip, (tip[0] + 0.03, tip[1] - 0.2 * sc), (x + 0.13 * sc, 0.3 * sc + 0.2), (x + 0.1 * sc, 0.2), 16)[1:]
+            p.poly(flame, layer, vv, occlude=False)
+    sway = 3 * math.sin(TAU * t)
+    with p.tf(dy=-0.95, rot=sway):
+        stalk = bezier((0, 0), (0.03, 0.8), (0, 1.62), 30)
+        p.line(stalk, 2.4)
+        for side in (-1, 1):
+            leaf = bezier((0, 0.25), (side * 0.32, 0.55), (side * 0.36, 1.0), 20)
+            p.poly(thick(leaf, [0.07 * math.sin(math.pi * i / 20) + 0.005 for i in range(21)]), "fill")
+            p.line(thick(leaf, [0.07 * math.sin(math.pi * i / 20) + 0.005 for i in range(21)]), 1.4, closed=True)
+        for j in range(9):
+            y = 0.92 + j * 0.085
+            sc = 1 - j * 0.06
+            for side in (-1, 1):
+                with p.tf(dx=side * 0.045 * sc, dy=y, rot=-side * 28):
+                    g = [(0.055 * sc * math.cos(a), 0.1 * sc * math.sin(a)) for a in (TAU * k / 24 for k in range(24))]
+                    p.poly(g, "fill")
+                    p.line(g, 1.5, closed=True)
+                    p.line([(0, 0.1 * sc), (0.01, 0.32 * sc)], 1.0, "ink", 200)
+        g = [(0.05 * math.cos(a), 1.72 + 0.09 * math.sin(a)) for a in (TAU * k / 24 for k in range(24))]
+        p.poly(g, "fill")
+        p.line(g, 1.5, closed=True)
+
+
+@sigil("orphic_egg", "The Orphic Egg", "Orphic Mysteries", 5,
+       "The cosmic egg of the Orphics with the serpent of creation coiled about it, from which Phanes, the first-born light, broke forth",
+       rings=("Greek Alphabet", "Zodiac", "Planetary Metals"))
+def orphic_egg(p, t, v):
+    cy, rx, ry = -0.06, 0.5, 0.74
+    half = lambda y: rx * math.sqrt(max(0.0, 1 - ((y - cy) / ry) ** 2)) * (1 - 0.12 * (y - cy) / ry)  # noqa: E731
+    egg = [(rx * math.sin(s) * (1 - 0.12 * math.cos(s)), cy + ry * math.cos(s)) for s in (TAU * i / 180 for i in range(180))]
+    y_bot, y_top, turns = -0.62, 0.56, 2.5
+    pts, dep, wid = [], [], []
+    for i in range(241):
+        u = i / 240
+        y = lerp(y_bot, y_top, u)
+        th = TAU * (turns * u + t)
+        hw = half(y) + 0.045
+        pts.append((hw * math.sin(th), y + 0.05 * math.cos(th)))
+        dep.append(math.cos(th))
+        wid.append(lerp(0.03, 0.12, min(1.0, u * 1.6)) * (1 - 0.3 * max(0, u - 0.85) / 0.15))
+    runs, idx = [], 0
+    for front, run in helix_runs(pts, dep):
+        runs.append((front, run, wid[idx:idx + len(run)]))
+        idx += len(run) - 1
+    for front, run, w in runs:
+        if not front:
+            serpent_run(p, run, w)
+    p.poly(egg, "fill")
+    for k in range(1, 6):
+        y = cy - ry + 2 * ry * k / 6
+        h = half(y)
+        p.line([(h * math.cos(a), y + 0.04 * math.sin(a)) for a in (math.pi * j / 30 for j in range(31))], 1.0, "faint", 255)
+    p.line(egg, 2.8, closed=True)
+    p.disc(0, cy, 0.05 * (1 + 0.5 * wave(t, 2)), "accent", 200, occlude=False)
+    for front, run, w in runs:
+        if front:
+            serpent_run(p, run, w)
+    x, y = pts[-1]
+    hx = x * 0.6
+    head = [(hx - 0.06, y), (hx - 0.05, y + 0.08), (hx, y + 0.15), (hx + 0.05, y + 0.08), (hx + 0.06, y)]
+    neck = thick([(x, y), (hx, y + 0.02)], 0.07)
+    p.poly(neck, "fill")
+    p.poly(head, "fill")
+    p.line(head, 1.8, closed=True)
+    p.dot(hx - 0.025, y + 0.08, 1.4, "accent")
+    p.dot(hx + 0.025, y + 0.08, 1.4, "accent")
+    fl = 0.03 * wave(t, 4)
+    p.line([(hx, y + 0.15), (hx, y + 0.2 + fl), (hx - 0.02, y + 0.23 + fl)], 1.1, "accent", 220)
+    p.line([(hx, y + 0.2 + fl), (hx + 0.02, y + 0.23 + fl)], 1.1, "accent", 220)

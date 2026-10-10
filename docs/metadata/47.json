@@ -1,0 +1,35 @@
+{
+  "name": "Plate XLVII: The Eye of Horus",
+  "description": "The Wedjat, the eye Horus lost fighting Set and Thoth made whole again: health, restoration and the full measure. Struck in Albedo: the whitening, the lunar washing of the matter. “OMNIA AB VNO”: All things from the One.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/47.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Eye of Horus"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Egyptian Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Albedo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "None"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Hieroglyphs"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "OMNIA AB VNO"
+    }
+  ]
+}

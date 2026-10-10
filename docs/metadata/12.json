@@ -1,0 +1,35 @@
+{
+  "name": "Plate XII: The Chymical Wedding of Sun and Moon",
+  "description": "Sol and Luna, the red king and the white queen, circling toward the conjunction from which the Mercury of the wise is born. Struck in Folio: iron-gall ink on rag paper, as the old plates were printed. “V · I · T · R · I · O · L”: Visit the interior of the earth; by rectifying you will find the hidden stone.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/12.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Chymical Wedding of Sun and Moon"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "European Alchemy"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Folio"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Nimbus"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Zodiac"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "V · I · T · R · I · O · L"
+    }
+  ]
+}

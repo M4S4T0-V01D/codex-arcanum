@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXI: The Astrolabe",
+  "description": "The instrument of the heavens: the turning rete of fixed stars above the tympan of the observer's sky. Struck in Viriditas: the greening power, the colour of the Emerald Tablet.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/21.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Astrolabe"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Hellenistic & Islamic Astronomy"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Viriditas"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Emanation"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Bagua"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Cartouche"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

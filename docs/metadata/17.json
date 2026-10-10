@@ -1,0 +1,35 @@
+{
+  "name": "Plate XVII: The Pyramids of Giza",
+  "description": "The three pyramids of the Giza plateau under the belt of Orion, the sky-form of Osiris. Struck in Folio: iron-gall ink on rag paper, as the old plates were printed. “ORA LEGE LEGE LEGE RELEGE LABORA ET INVENIES”: Pray, read, read, read, reread, work, and you will find (Mutus Liber).",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/17.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Pyramids of Giza"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Egyptian Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Folio"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Rays of Glory"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "None"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ORA LEGE LEGE LEGE RELEGE LABORA ET INVENIES"
+    }
+  ]
+}

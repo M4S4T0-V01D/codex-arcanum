@@ -1,0 +1,35 @@
+{
+  "name": "Plate XIII: The Seal of Solomon",
+  "description": "Two triangles, fire and water, above and below, locked into the hexagram with which Solomon bound the spirits. Struck in Verdigris: copper and its green rust, the metal of Venus.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/13.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Seal of Solomon"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Solomonic Magic"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Verdigris"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Nimbus"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Hebrew Alphabet"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "Plate CCCXXXVI: The Platonic Solid",
+  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Albedo: the whitening, the lunar washing of the matter. “SOLVE ET COAGULA”: Dissolve and coagulate.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/336.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Platonic Solid"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Platonism"
+    },
+    {
+      "trait_type": "Form",
+      "value": "Icosahedron (Water)"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Albedo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "None"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "None"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "SOLVE ET COAGULA"
+    }
+  ]
+}

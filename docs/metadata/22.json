@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXII: The Triple Spiral",
+  "description": "Three spirals in one unbroken line, carved at the entrance stone of Newgrange five thousand years ago. Struck in Albedo: the whitening, the lunar washing of the matter. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/22.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Triple Spiral"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Celtic Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Albedo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Emanation"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "None"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "QVOD EST SVPERIVS EST SICVT QVOD INFERIVS"
+    }
+  ]
+}

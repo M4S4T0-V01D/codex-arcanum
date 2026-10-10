@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXXVII: The Sri Yantra",
+  "description": "Nine interlocking triangles, four of Shiva and five of Shakti, radiating from the bindu: the cosmos as a diagram of union. Struck in Lapis Lazuli: ground lapis, the stone of the night sky and of Egyptian heaven. “LVX E TENEBRIS”: Light out of darkness.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/37.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Sri Yantra"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Tantra"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Lapis Lazuli"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Sacred Lattice"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Lancet Arch"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "LVX E TENEBRIS"
+    }
+  ]
+}

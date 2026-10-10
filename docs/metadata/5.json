@@ -1,0 +1,35 @@
+{
+  "name": "Plate V: The Tree of Life",
+  "description": "The ten Sephiroth and twenty-two paths of the Otz Chiim, struck through by the Lightning Flash that descends from Kether to Malkuth. Struck in Folio: iron-gall ink on rag paper, as the old plates were printed. “ΓΝΩΘΙ ΣΕΑΥΤΟΝ”: Know thyself (the Delphic maxim).",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/5.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Tree of Life"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Kabbalah"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Folio"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Planetary Metals"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "ΓΝΩΘΙ ΣΕΑΥΤΟΝ"
+    }
+  ]
+}

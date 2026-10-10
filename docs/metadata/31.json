@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXXI: The Tree of Life",
+  "description": "The ten Sephiroth and twenty-two paths of the Otz Chiim, struck through by the Lightning Flash that descends from Kether to Malkuth. Struck in Citrinitas: the yellowing, the dawn of the solar light within the work. “SCIRE · AVDERE · VELLE · TACERE”: To know, to dare, to will, to keep silent.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/31.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Tree of Life"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Kabbalah"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Citrinitas"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Sacred Lattice"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Hebrew Alphabet"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "SCIRE · AVDERE · VELLE · TACERE"
+    }
+  ]
+}

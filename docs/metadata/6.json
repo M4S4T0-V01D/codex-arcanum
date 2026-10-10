@@ -1,0 +1,35 @@
+{
+  "name": "Plate VI: The Valknut",
+  "description": "Three triangles knotted together, carved on the picture stones beside Odin and the fallen: the knot of the slain. Struck in Folio: iron-gall ink on rag paper, as the old plates were printed.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/6.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Valknut"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Norse Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Folio"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Emanation"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Om Mani Padme Hum"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Cartouche"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "None"
+    }
+  ]
+}

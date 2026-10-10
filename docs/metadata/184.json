@@ -1,0 +1,39 @@
+{
+  "name": "Plate CLXXXIV: The Platonic Solid",
+  "description": "The five regular bodies of the Timaeus, which Plato gave to Fire, Air, Earth, Water and the Heavens. Struck in Nigredo: the blackening, where every matter is first dissolved. “V · I · T · R · I · O · L”: Visit the interior of the earth; by rectifying you will find the hidden stone.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/184.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Platonic Solid"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Platonism"
+    },
+    {
+      "trait_type": "Form",
+      "value": "Star Tetrahedron"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Nigredo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Emanation"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "None"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Folio Plate"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "V · I · T · R · I · O · L"
+    }
+  ]
+}

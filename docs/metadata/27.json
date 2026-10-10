@@ -1,0 +1,35 @@
+{
+  "name": "Plate XXVII: The Triple Spiral",
+  "description": "Three spirals in one unbroken line, carved at the entrance stone of Newgrange five thousand years ago. Struck in Nigredo: the blackening, where every matter is first dissolved. “SOLVE ET COAGULA”: Dissolve and coagulate.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/27.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Triple Spiral"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Celtic Mysteries"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Nigredo"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Sacred Lattice"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Ogham"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Seal"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "SOLVE ET COAGULA"
+    }
+  ]
+}

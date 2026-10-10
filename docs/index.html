@@ -1824,12 +1824,16 @@ const BOOK = (() => {
     c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(0, r * .07, r * .07, 0, 7); c.fill();
     c.restore();
   }
-  async function draw(info) {
-    await Promise.all(['700 120px "Cinzel Decorative"', '500 30px Cinzel', 'italic 500 80px "Cormorant Garamond"', '400 30px "Cormorant Garamond"', '500 18px "JetBrains Mono"']
-      .map(f => document.fonts.load(f).catch(() => {})));
+  const FONTS = ['700 120px "Cinzel Decorative"', '500 30px Cinzel', 'italic 500 80px "Cormorant Garamond"', '400 30px "Cormorant Garamond"', '500 18px "JetBrains Mono"'];
+  function platePick(info) {
+    const ones = (D.hierophants || []).map(h => h.id);
+    const best = (D.hero || []).filter(id => !ones.includes(id));
+    const pool = info.phase === "sanctum" && ones.length ? ones : (best.length ? best : D.tokens.map(t => t.id).filter(id => !ones.includes(id)));
+    return pool[(info.num * 7 + 3) % pool.length];
+  }
+  /* Draws the whole page into context c (in 1600x900 units). `plate` is any drawable (image, video, canvas). */
+  function drawCard(c, info, plate) {
     const sanct = info.phase === "sanctum";
-    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-    const c = cv.getContext("2d");
     const bg = c.createRadialGradient(W * .64, H * .42, 40, W * .6, H * .5, W * .85);
     bg.addColorStop(0, sanct ? "#3a2a10" : "#26190d"); bg.addColorStop(.55, "#0e0a06"); bg.addColorStop(1, "#040302");
     c.fillStyle = bg; c.fillRect(0, 0, W, H);
@@ -1853,16 +1857,10 @@ const BOOK = (() => {
     for (let y = 60; y < H - 50; y += 16) { c.beginPath(); c.arc(34, y, 1.3, 0, 7); c.fill(); c.beginPath(); c.arc(W - 34, y, 1.3, 0, 7); c.fill(); }
     [[40, 40], [W - 40, 40], [40, H - 40], [W - 40, H - 40]].forEach(([x, y]) => rosette(c, x, y, 22));
     // the plate
-    const ones = (D.hierophants || []).map(h => h.id);
-    const best = (D.hero || []).filter(id => !ones.includes(id));
-    const pool = sanct && ones.length ? ones : (best.length ? best : D.tokens.map(t => t.id).filter(id => !ones.includes(id)));
-    const pid = pool[(info.num * 7 + 3) % pool.length];
+    const pid = platePick(info);
     const px = 96, py = 110, ps = 660;
-    try {
-      const img = await loadImg(poster(pid));
-      c.save(); c.shadowColor = "rgba(0,0,0,.7)"; c.shadowBlur = 50; c.shadowOffsetY = 18; c.fillStyle = "#000"; c.fillRect(px, py, ps, ps); c.restore();
-      c.drawImage(img, px, py, ps, ps);
-    } catch {}
+    c.save(); c.shadowColor = "rgba(0,0,0,.7)"; c.shadowBlur = 50; c.shadowOffsetY = 18; c.fillStyle = "#000"; c.fillRect(px, py, ps, ps); c.restore();
+    if (plate) c.drawImage(plate, px, py, ps, ps);
     c.strokeStyle = gold(c, px, py, px + ps, py + ps); c.lineWidth = 6; c.strokeRect(px - 8, py - 8, ps + 16, ps + 16);
     c.lineWidth = 1.2; c.strokeStyle = "rgba(232,201,119,.7)"; c.strokeRect(px - 18, py - 18, ps + 36, ps + 36);
     const pt = byId[pid];
@@ -1897,8 +1895,68 @@ const BOOK = (() => {
     spaced(c, "INSCRIBED " + romanDate(), X, 778, 3);
     spaced(c, "777 PLATES  ·  OPENSEA  ·  ROBINHOOD CHAIN", X, 810, 3);
     c.fillStyle = "#e8c977"; c.font = '500 18px "JetBrains Mono"'; spaced(c, SITE.replace(/^https?:\/\//, "").replace(/\/$/, ""), X, 846, 2);
+  }
+
+  async function still(info) {  // the full-size PNG
+    await Promise.all(FONTS.map(f => document.fonts.load(f).catch(() => {})));
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    let img = null;
+    try { img = await loadImg(poster(platePick(info))); } catch {}
+    drawCard(cv.getContext("2d"), info, img);
     return cv;
   }
+
+  /* The animated page: the plate plays its full loop inside the card. Frames are
+     grabbed from the plate's video and encoded in the browser (gifenc); after the
+     first frame only changed pixels are stored, so the file stays small. */
+  async function animated(info, onProgress) {
+    await Promise.all(FONTS.map(f => document.fonts.load(f).catch(() => {})));
+    const { GIFEncoder, quantize, applyPalette } = await import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js");
+    const GW = 800, GH = 450, FR = 42, DT = 4.2 / FR, TS = 330;
+    const strip = await loadImg(`plates/strip/${platePick(info)}.jpg`);  // 42 frames, 7 x 6
+    const cell = document.createElement("canvas"); cell.width = cell.height = TS;
+    const cc = cell.getContext("2d");
+    const cv = document.createElement("canvas"); cv.width = GW; cv.height = GH;
+    const c = cv.getContext("2d", { willReadFrequently: true });
+    c.scale(GW / W, GH / H);
+    const frames = [];
+    for (let k = 0; k < FR; k++) {
+      cc.clearRect(0, 0, TS, TS);
+      cc.drawImage(strip, (k % 7) * TS, Math.floor(k / 7) * TS, TS, TS, 0, 0, TS, TS);
+      c.clearRect(0, 0, W, H);
+      drawCard(c, info, cell);
+      frames.push(c.getImageData(0, 0, GW, GH).data.slice());
+      onProgress && onProgress((k + 1) / FR * 0.7);
+      if (k % 6 === 5) await new Promise(r => setTimeout(r));
+    }
+    // one shared palette from the first frame plus the plate area of a few others
+    const px0 = Math.round(96 * GW / W), py0 = Math.round(110 * GH / H), pw = Math.round(660 * GW / W);
+    const sample = [frames[0]];
+    for (const k of [10, 21, 32]) {
+      const f = frames[k], crop = new Uint8ClampedArray(pw * pw * 4);
+      for (let y = 0; y < pw; y++) crop.set(f.subarray(((py0 + y) * GW + px0) * 4, ((py0 + y) * GW + px0 + pw) * 4), y * pw * 4);
+      sample.push(crop);
+    }
+    const all = new Uint8ClampedArray(sample.reduce((n, a) => n + a.length, 0));
+    sample.reduce((o, a) => (all.set(a, o), o + a.length), 0);
+    const palette = quantize(all, 255);
+    while (palette.length < 255) palette.push([0, 0, 0]);
+    palette.push([0, 0, 0]);
+    const TI = 255;
+    const enc = GIFEncoder();
+    let prev = null;
+    for (let k = 0; k < FR; k++) {
+      const idx = applyPalette(frames[k], palette);
+      if (prev) for (let i = 0; i < idx.length; i++) if (idx[i] === prev[i]) idx[i] = TI; else prev[i] = idx[i];
+      else prev = idx.slice();
+      enc.writeFrame(idx, GW, GH, k ? { delay: DT * 1000, transparent: true, transparentIndex: TI, dispose: 1 } : { palette, delay: DT * 1000, repeat: 0, dispose: 1 });
+      onProgress && onProgress(0.7 + (k + 1) / FR * 0.3);
+      if (k % 6 === 5) await new Promise(r => setTimeout(r));
+    }
+    enc.finish();
+    return new Blob([enc.bytes()], { type: "image/gif" });
+  }
+
   function postText(info) {
     const n = "№ " + pad(info.num);
     if (info.won && info.phase === "sanctum") return `I defeated Hermes Trismegistus at the Game of Thoth and won a seat in the Inner Sanctum ✶ ${n} in the Book of Names.\n\n777 animated plates of the ancient mysteries. Can you beat him?`;
@@ -1908,36 +1966,51 @@ const BOOK = (() => {
   async function show(after, info) {
     after.parentNode.querySelectorAll(".share").forEach(n => n.remove());
     const box = el("div", { class: "share" }, el("div", { class: "k", text: "Your page in the Book of Names" }));
+    const note = el("div", { class: "note", "aria-live": "polite", text: "The scribe is gilding your page…" });
+    box.append(note);
     after.after(box);
-    let cv;
-    try { cv = await draw(info); } catch (e) { box.remove(); return; }
-    const blob = await new Promise(r => cv.toBlob(r, "image/png"));
-    const fname = `codex-arcanum-book-${pad(info.num)}.png`;
-    const file = new File([blob], fname, { type: "image/png" });
-    const url = URL.createObjectURL(blob);
-    const note = el("div", { class: "note", "aria-live": "polite" });
+    box.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" });
     const text = postText(info);
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE)}&hashtags=CodexArcanum`;
-    const save = () => { const a = el("a", { href: url, download: fname }); document.body.append(a); a.click(); a.remove(); };
+    const stillCv = await still(info).catch(() => null);
+    const pngBlob = stillCv ? await new Promise(r => stillCv.toBlob(r, "image/png")) : null;
+    let gifBlob = null;
+    try { gifBlob = await animated(info, f => { note.textContent = `The scribe is gilding your page… ${Math.round(f * 100)}%`; }); } catch (e) { console.warn("gif", e); }
+    const main = gifBlob || pngBlob;
+    if (!main) { box.remove(); return; }
+    const ext = gifBlob ? "gif" : "png";
+    const fname = `codex-arcanum-book-${pad(info.num)}.${ext}`;
+    const file = new File([main], fname, { type: main.type });
+    const url = URL.createObjectURL(main);
+    const save = (blob, name) => { const a = el("a", { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove(); };
     const mobile = matchMedia("(pointer: coarse)").matches;
     const xBtn = el("button", { class: "btn x", type: "button", html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8.1-9.3L1 2h7l4.8 6.3zM17.7 20h1.7L6.4 3.9H4.6z"/></svg> Post on X' });
     xBtn.onclick = async () => {
       if (mobile && navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], text: `${text}\n\n${SITE} #CodexArcanum` }); return; } catch (e) { if (e.name === "AbortError") return; }
       }
+      if (gifBlob) {  // browsers cannot copy a GIF to the clipboard: save it, then open X
+        save(gifBlob, fname);
+        window.open(intent, "_blank", "noopener");
+        note.textContent = "Your animated page is saved: attach the GIF to your post.";
+        return;
+      }
       let copied = false;
       if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
-        try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); copied = true; } catch {}
+        try { await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]); copied = true; } catch {}
       }
-      if (!copied) save();
+      if (!copied) save(pngBlob, fname);
       window.open(intent, "_blank", "noopener");
       note.textContent = copied ? "Your page is copied: paste it into the post (Ctrl/⌘ + V)." : "Your page is saved: attach it to the post.";
     };
-    const dl = el("button", { class: "btn", type: "button", text: "Save image", onclick: () => { save(); note.textContent = "Saved."; } });
-    box.append(el("img", { src: url, alt: `Page ${pad(info.num)} of the Book of Names` }), el("div", { class: "acts" }, xBtn, dl), note);
-    box.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" });
+    const acts = el("div", { class: "acts" }, xBtn);
+    if (gifBlob) acts.append(el("button", { class: "btn", type: "button", text: `Save GIF · ${(gifBlob.size / 1e6).toFixed(1)} MB`, onclick: () => { save(gifBlob, fname); note.textContent = "Saved."; } }));
+    if (pngBlob) acts.append(el("button", { class: "btn", type: "button", text: "Save still (PNG)", onclick: () => { save(pngBlob, fname.replace(/\.gif$/, ".png")); note.textContent = "Saved."; } }));
+    note.textContent = gifBlob ? "" : "Your page is ready.";
+    box.insertBefore(el("img", { src: url, alt: `Page ${pad(info.num)} of the Book of Names` }), note);
+    box.insertBefore(acts, note);
   }
-  return { show, draw };
+  return { show, still, animated };
 })();
 
 /* ====== The Game of Thoth ====== */

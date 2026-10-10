@@ -342,7 +342,7 @@ def tablet(p, t, v):
     sol, luna = (-1.18, 1.12), (1.18, 1.12)  # the father and the mother
     fine_rays(p, sol, 24, 0.1, 0.36, 230, t, w=0.03, wobble=0.03, layer="flare")
     for i in range(16):  # the sun's own rays, straight and flaming by turns
-        a = 22.5 * i + 11.25 * t
+        a = 22.5 * i + 45 * t
         if i % 2:
             gild(p, [polar(0.13, a - 6, *sol), polar(0.22, a, *sol), polar(0.13, a + 6, *sol)], 140, 0.8)
         else:
@@ -436,10 +436,14 @@ def aum(p, t, v):
         p.line([polar(0.8, a), polar(0.96, a)], 0.5, "ink", 150)
     for r, w_ in ((0.78, 1.4), (1.23, 1.0), (1.26, 0.6)):
         p.circle(0, 0, r, w_, "ink", 220)
-    for i in range(108):  # the mala
-        a = 90 + i * 360 / 108 + 360 / 108 * t
+    for i in range(108):  # the mala; a light counts the beads, one quarter-round per loop
+        a = 90 - i * 360 / 108
         guru = i % 27 == 0
         p.dot(*polar(1.31, a), 2.6 if guru else 1.6, "accent" if guru else "ink", 255)
+        d = (t * 27 - i) % 27
+        d = min(d, 27 - d)  # a soft light gliding from bead to bead
+        if d < 1.5:
+            p.dot(*polar(1.31, a), 2.4, "flare", int(230 * (1 - d / 1.5)))
     words = GAYATRI.split()
     for i, w in enumerate(words):
         a = 90 - 360 * (i + 0.5) / len(words)
@@ -470,7 +474,7 @@ def aum(p, t, v):
             p.line(bezier((x, base_y + 0.02), (x * 1.1, base_y + h * 0.5), tip, 10)[:-2], 0.5, "ink", 160)
     p.text("ॐ", c[0], c[1] + 0.02, 214, "deva", "flare", int(35 + 30 * wave(t, 2)), upright=True)
     p.text("ॐ", c[0], c[1] - 0.02, 208, "deva", "ink", 255, upright=True)
-    p.sparkle(0.16, c[1] + 0.36, 0.14, int(200 + 55 * wave(t, 2)), rot=45 * t)
+    p.sparkle(0.16, c[1] + 0.36, 0.14, int(200 + 55 * wave(t, 2)), rot=90 * t)
     p.glow(0.16, c[1] + 0.36, 0.09, 255)
     hierophant_frame(p, t, "AUM · THE PRANAVA")
 
@@ -514,7 +518,7 @@ def ophanim(p, t, v):
             q = _rot((math.cos(a) * R, math.sin(a) * R, 0.0), ax, ay, az)
             q2 = _rot((math.cos(a + 0.05) * R, math.sin(a + 0.05) * R, 0.0), ax, ay, az)
             items.append((q[2] + 0.001, "eye", (q, math.degrees(math.atan2(q2[1] - q[1], q2[0] - q[0])), ri * ne + k)))
-    for z, kind, d in sorted(items, key=lambda it: it[0]):
+    for z, kind, d in sorted(items, key=lambda it: (round(it[0], 4), it[1], str(it[2])[:40])):  # stable paint order
         k = (z + 1.05) / 2.1
         if kind == "band":
             quad = [q[:2] for q in d]
@@ -606,7 +610,7 @@ def yggdrasil(p, t, v):
         p.line(pool, 1.4, closed=True)
         for r in range(3):
             u = (t + r / 3) % 1
-            p.line(ellipse(wq[0], wq[1], 0.2 * u, 0.065 * u), 0.6, "accent", int(220 * (1 - u)), closed=True)
+            p.line(ellipse(wq[0], wq[1], 0.2 * u, 0.065 * u), 0.6, "accent", int(220 * (1 - u) * min(1.0, u * 6)), closed=True)
         p.text(name, wq[0], wq[1] - 0.12, 7.5, "serif", "ink", 200, upright=True)
     for x, y, a in tips:
         p.dot(x, y, 1.1, "accent", 160)
@@ -947,9 +951,9 @@ def sunstone(p, t, v):
         p.dot(-0.11 + j * 0.0183, 1.18, 1.0, "accent", 255)
     for r, w_ in ((1.1, 1.6), (1.38, 1.4), (1.41, 2.4)):
         p.circle(0, 0, r, w_)
-    with p.tf(rot=-22.5 * t):  # the band of feathers and the solar rays
-        for i in range(60):
-            a = 6 * i
+    with p.tf(rot=-45 * t):  # the band of feathers and the solar rays (all 45°-periodic, so the turn is seamless)
+        for i in range(64):
+            a = 5.625 * i
             p.line([polar(1.0, a), polar(1.08, a + 2)], 0.7, "ink", 170)
         for i in range(16):
             a = 22.5 * i

@@ -184,6 +184,13 @@ def main():
     }
     hero = [t for t in (7, 30, 108, 4, 23, 144, 32, 13, 432, 1, 31, 333, 25, 42, 777) if t in ids]
     data["hero"] = hero
+    # frame strips for the animated share card: 42 frames of each plate it may use, 7x6 grid at 330px
+    os.makedirs(os.path.join(PLATES, "strip"), exist_ok=True)
+    for i in sorted(set(hero) | set(ONE_OF_ONE)):
+        dst = os.path.join(PLATES, "strip", f"{i}.jpg")
+        if a.fresh or not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(os.path.join(PLATES, f"{i}.mp4")):
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", os.path.join(PLATES, f"{i}.mp4"),
+                            "-vf", "fps=10,scale=330:330:flags=lanczos,tile=7x6", "-frames:v", "1", "-q:v", "4", dst], check=True)
     og_image([hero[0], hero[1], hero[2]], os.path.join(DOCS, "og.png"))
 
     # the Game of Thoth: one card pool for the site and the gate worker, one engine for both

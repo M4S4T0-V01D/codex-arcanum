@@ -263,4 +263,4 @@ def draw_degree(p, level, t):
     if level >= 4:
         p.glow(*c, r * 2.2, int(120 + 80 * wave(t, 1)) if level == 5 else 90)
     if level == 5:
-        p.sparkle(*c, r * 2.0, int(170 + 85 * wave(t, 2)), rot=45 * t)
+        p.sparkle(*c, r * 2.0, int(170 + 85 * wave(t, 2)), rot=90 * t)  # 4-point star: 90° symmetry

@@ -186,8 +186,15 @@ npx wrangler deploy   # after changing the worker or the card pool
 or a verified Thoth win, the site draws a 1600×900 "page of the Book" in the
 browser: № number, @handle, seat, a plate, a wax seal. It offers a
 **Post on X** button: on phones the image attaches through the share sheet;
-on desktop it is copied (or saved) and X opens with the post text, ready to
-paste.
+on desktop it is saved and X opens with the post text, ready to attach.
+The card is an **animated GIF** (800×450, 42 frames, the plate playing its
+full loop), encoded in the browser with gifenc from per-plate frame strips
+that `build_site.py` writes to `docs/plates/strip/` (7×6 grid, 330px). A
+PNG still is offered too, and the site falls back to it if the GIF fails.
+
+Every animation is a seamless loop: rotations step by the figure's own
+symmetry, and pulses run at whole-number frequencies. To check, render
+frame 0 and frame 1.0 and compare them; they must match.
 
 For automatic exports every 10 minutes, give the worker a fine-grained GitHub
 token with *Contents: read & write* on the allowlist repo only:

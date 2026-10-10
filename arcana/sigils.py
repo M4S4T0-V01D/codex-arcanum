@@ -555,11 +555,12 @@ def tree_of_life(p, t, v):
     if u <= 1:
         p.line(sub_path(flash, max(0, u - 0.14), u, 30), 3.2, "accent", 255)
         p.line(sub_path(flash, max(0, u - 0.14), u, 30), 9.0, "flare", 200)
-        p.sparkle(*path_point(flash, u), 0.12, 255, rot=45 * u)
+        p.sparkle(*path_point(flash, u), 0.12, int(255 * min(1.0, u / 0.06)), rot=45 * u)
     letters = "אבגדהוזחטי"
     for i, (x, y) in enumerate(pos):
         p.ring(x, y, 0.088, 2.2)
-        lit = math.exp(-(u - frac[i]) * 9) if u >= frac[i] else 0.0
+        d = (u - frac[i]) % 1.25  # cyclic, with a pre-glow so the loop has no seam
+        lit = min(1.0, math.exp(-d * 9) + max(0.0, (d - 1.13) / 0.12) ** 2)
         if lit > 0.02:
             p.circle(x, y, 0.088, 3.4, "accent", int(255 * lit))
             p.glow(x, y, 0.22, int(230 * lit))
@@ -1235,7 +1236,7 @@ def kundalini(p, t, v):
                 p.poly(pet, "fill")
                 p.line(pet, 1.1, "ink", 230)
         p.ring(0, y, rr * 0.5, 1.8)
-        lit = math.exp(-(e - y) * 4) if e >= y else 0.0
+        lit = (math.exp(-(e - y) * 4) if e >= y else 0.0) * (1 - smooth(0.86, 0.99, t))  # the risen fire fades before it rises again
         if lit > 0.03:
             p.disc(0, y, rr * 0.32, "accent", int(255 * lit), occlude=False)
             p.glow(0, y, rr * 1.6, int(220 * lit))

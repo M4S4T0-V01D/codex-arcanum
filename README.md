@@ -21,10 +21,28 @@ Output in `out/`: `<id>.gif`, `<id>.json` (ERC-721 / OpenSea metadata),
 
 ## Website
 
-`docs/` is the GitHub Pages site (https://m4s4t0-v01d.github.io/codex-arcanum/).
-It has the hero showcase, the 28 Mysteries, the Opus palettes, full-supply
-rarity tables, a filterable gallery with per-token metadata, and the trait
-manifest hash. Rebuild it with:
+`docs/` is the GitHub Pages site (https://m4s4t0-v01d.github.io/codex-arcanum/):
+the cyber temple of Hermes Trismegistus. The visitor knocks three times at
+the temple doors, then ascends the seven planetary spheres of the
+*Poimandres* (Moon → Saturn) to the Eighth, with Hermes narrating in the
+first person. The background is a WebGL nebula shader and a 2D orrery with
+glyph rain, recoloured per sphere. Each gate holds one part of the
+collection:
+
+| Gate | Sphere | Content |
+|---|---|---|
+| I | Moon | Hero, cycling plates |
+| II | Mercury | The concept |
+| III | Venus | The Opus palettes |
+| IV | Sun | The 28 Mysteries as a wheel of lunar mansions |
+| V | Mars | Full-supply rarity |
+| VI | Jupiter | Filterable gallery |
+| VII | Saturn | Specs and the provenance seal |
+| VIII | Ogdoad | Three-card oracle draw, mint (to be announced) |
+
+Extras: a "Speak with Hermes" console (type `help`), synthesized sound
+(off by default), and an easter egg (type the word of the stone). Rebuild
+the site with:
 
 ```
 python3 build_site.py          # renders missing showcase plates, then writes docs/

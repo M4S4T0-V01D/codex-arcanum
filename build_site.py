@@ -44,7 +44,16 @@ def showcase_ids(allt):
             figure_pick[key] = tid
             if tid not in ids:
                 ids.append(tid)
-    return sorted(ids), figure_pick
+    opus_pick = {}
+    for tid, tok in allt.items():
+        o = tok["traits"]["Opus"]
+        if o not in opus_pick:
+            # prefer a plate already in the showcase
+            inside = next((i for i in ids if allt[i]["traits"]["Opus"] == o), None)
+            opus_pick[o] = inside or tid
+            if opus_pick[o] not in ids:
+                ids.append(opus_pick[o])
+    return sorted(ids), figure_pick, opus_pick
 
 
 def small_gif(src, dst):
@@ -66,7 +75,7 @@ def og_image(ids, out):
     ImageDraw.Draw(glow).text((W / 2, 110), title, font=f, fill=255, anchor="mm")
     im.paste((255, 176, 80), (0, 0), glow.filter(ImageFilter.GaussianBlur(14)).point(lambda v: int(v * 0.5)))
     d.text((W / 2, 110), title, font=f, fill=(240, 212, 140), anchor="mm")
-    d.text((W / 2, 188), "777 animated plates of the ancient mysteries", font=fs, fill=(200, 184, 150), anchor="mm")
+    d.text((W / 2, 188), "the cyber temple of Hermes Trismegistus  ·  777 animated plates", font=fs, fill=(200, 184, 150), anchor="mm")
     d.rectangle((20, 20, W - 21, H - 21), outline=(120, 92, 48), width=2)
     im.save(out, optimize=True)
 
@@ -78,7 +87,7 @@ def main():
     a = ap.parse_args()
 
     allt = roll_collection(SUPPLY, SEED)
-    ids, figure_pick = showcase_ids(allt)
+    ids, figure_pick, opus_pick = showcase_ids(allt)
     os.makedirs(os.path.join(PLATES, "thumbs"), exist_ok=True)
     os.makedirs(os.path.join(PLATES, "sm"), exist_ok=True)
 
@@ -124,7 +133,7 @@ def main():
                        "plate": next((figure_pick[(k, v)] for v in ([v for v, _ in s["variants"]] or [None])
                                       if (k, v) in figure_pick), None),
                        "count": counts["Mystery"][s["name"]]} for k, s in SIGILS.items()],
-        "opus": [{"name": n, "lore": p["lore"], "count": counts["Opus"][n],
+        "opus": [{"name": n, "lore": p["lore"], "count": counts["Opus"][n], "plate": opus_pick[n],
                   "bg": ["#%02x%02x%02x" % c for c in p["bg"]],
                   "ink": None if p["ink"] == "iridescent" else ["#%02x%02x%02x" % c for c in p["ink"]],
                   "accent": "#%02x%02x%02x" % p["accent"]} for n, p in PALETTES.items()],

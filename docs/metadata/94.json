@@ -1,0 +1,35 @@
+{
+  "name": "Plate XCIV: The Ouroboros",
+  "description": "The serpent that devours its own tail, drawn after the Chrysopoeia of Cleopatra: ΕΝ ΤΟ ΠΑΝ, the One is the All. Struck in Cauda Pavonis: the peacock's tail, the iridescence that heralds the Stone. “QVOD EST SVPERIVS EST SICVT QVOD INFERIVS”: That which is above is as that which is below.",
+  "image": "https://m4s4t0-v01d.github.io/codex-arcanum/plates/94.gif",
+  "attributes": [
+    {
+      "trait_type": "Mystery",
+      "value": "The Ouroboros"
+    },
+    {
+      "trait_type": "Tradition",
+      "value": "Graeco-Egyptian Alchemy"
+    },
+    {
+      "trait_type": "Opus",
+      "value": "Cauda Pavonis"
+    },
+    {
+      "trait_type": "Halo",
+      "value": "Celestial Spheres"
+    },
+    {
+      "trait_type": "Glyph Ring",
+      "value": "Alchemical Elements"
+    },
+    {
+      "trait_type": "Frame",
+      "value": "Bare"
+    },
+    {
+      "trait_type": "Motto",
+      "value": "QVOD EST SVPERIVS EST SICVT QVOD INFERIVS"
+    }
+  ]
+}

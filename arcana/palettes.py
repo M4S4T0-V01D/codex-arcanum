@@ -87,7 +87,7 @@ PALETTES = {
         lore="ash-silver under the northern lights"),
     "Phoenix Flame": dict(
         weight=0, one=True, kind="dark", bg=((104, 16, 10), (14, 2, 2)), ink=((255, 238, 172), (216, 120, 40)),
-        accent=(255, 250, 222), glow=(255, 112, 30), glow_k=0.65, fill=(40, 6, 4),
+        accent=(255, 168, 52), glow=(255, 112, 30), glow_k=0.65, fill=(40, 6, 4),
         faint=(255, 160, 90), stars=(255, 210, 170), nebula=(220, 60, 20),
         lore="the fire the Bennu kindles from its own wings"),
     "Obsidian Sun": dict(
